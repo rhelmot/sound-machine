@@ -3,6 +3,7 @@ from . import SAMPLE_RATE
 class Envelope(object):
     def __init__(self, duration):
         self.duration = int(duration * SAMPLE_RATE)
+        self.pure = True
 
     def amplitude(self, frame):
         if frame < self.duration:
@@ -34,20 +35,21 @@ class ADSREnvelope(Envelope):
         return 0
 
 class DecayEnvelope(Envelope):
-    def __init__(self, attack, sustain, release, decay_param=0.5):
+    def __init__(self, attack, sustain, release, decay_param=0.5, attack_level=1.0):
         super(DecayEnvelope, self).__init__(attack + sustain + release)
         self.attack = attack * SAMPLE_RATE
         self.sustain = sustain * SAMPLE_RATE
         self.release = release * SAMPLE_RATE
         self.decay_param = float(decay_param)
-        self.release_level = self.decay_param ** (float(self.attack + self.sustain) / SAMPLE_RATE)
+        self.attack_level = float(attack_level)
+        self.release_level = self.decay_param ** (float(self.attack + self.sustain) / SAMPLE_RATE) * self.attack_level
 
     def amplitude(self, frame):
         if frame < self.attack:
-            return float(frame) / self.attack
+            return float(frame) / self.attack * self.attack_level
         frame -= self.attack
         if frame < self.sustain:
-            return self.decay_param ** (float(frame) / SAMPLE_RATE)
+            return self.decay_param ** (float(frame) / SAMPLE_RATE) * self.attack_level
         frame -= self.sustain
         if frame < self.release:
             return float(frame) / self.release * -self.release_level + self.release_level

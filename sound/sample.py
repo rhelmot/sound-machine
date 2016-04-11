@@ -1,8 +1,10 @@
 import math
+import random
 
 from . import SAMPLE_RATE
+from .sound import Sound
 
-class Sample(object):
+class Sample(Sound):
     def __init__(self, frequency):
         self.frequency = float(frequency)
         self.duration = float('inf')
@@ -10,16 +12,6 @@ class Sample(object):
     @property
     def period(self):
         return 1/self.frequency * SAMPLE_RATE
-
-    def amplitude(self, frame): # pylint: disable=unused-argument,no-self-use
-        return 0
-
-    @staticmethod
-    def mix(*args):
-        out = 0.0
-        for data, amp in args:
-            out += data * amp
-        return out
 
 class SineWave(Sample):
     def amplitude(self, frame):
@@ -50,22 +42,43 @@ class TriangleWave(Sample):
         pframe -= hperiod
         return pframe / qperiod - 1
 
-class Harmonics(Sample):
-    def __init__(self,
-                 frequency,
-                 ns=(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16),
-                 mixing=None,
-                 subsample=SineWave):
-        super(Harmonics, self).__init__(frequency)
-        self.ns = ns
-        self.subsamples = [subsample(i*frequency) for i in ns]
-        if mixing is None:
-            mixing = [1./i for i in xrange(1, len(ns)+1)]
-        mix_sum = float(sum(mixing))
-        self.mixing = [x/mix_sum for x in mixing]
+class Noise(Sample):
+    # I... guess this is technically pure?
+    def __init__(self):
+        super(Noise, self).__init__(0)
 
     def amplitude(self, frame):
-        return sum(self.components(frame))
+        return random.random() * 2 - 1
 
-    def components(self, frame):
-        return [samp.amplitude(frame)*mix for samp, mix in zip(self.subsamples, self.mixing)]
+class Digitar(Sample):
+    def __init__(self, frequency):
+        super(Digitar, self).__init__(frequency)
+        self.buffersize = 256
+        self.sample_window = None
+        self.cur_frame = None
+        self.new_buffer()
+
+    pure = False
+
+    def new_buffer(self):
+        self.sample_window = [random.random() * 2 - 1 for _ in xrange(self.buffersize)]
+        self.cur_frame = 0
+
+    def get_buffer(self, frame):
+        return self.sample_window[frame % self.buffersize]
+
+    def set_buffer(self, frame, value):
+        self.sample_window[frame % self.buffersize] = value
+
+    def amplitude(self, frame):
+        if frame < self.cur_frame:
+            self.cur_frame = 0
+
+        while self.cur_frame < frame:
+            self.set_buffer(self.cur_frame + 1, self.get_buffer(self.cur_frame) * 0.3 + self.get_buffer(self.cur_frame + 1) * 0.7)
+            self.cur_frame += 1
+
+        return self.get_buffer(self.cur_frame)
+
+def harmonics(freq, ns=(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16), subsample=SineWave):
+    return [subsample(freq*n) for n in ns]

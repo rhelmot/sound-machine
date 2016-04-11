@@ -2,7 +2,15 @@ import numpy
 
 from . import sd, SAMPLE_RATE
 
-def play(thing):
+class Sound(object):
+    # pylint: disable=unused-argument,no-self-use
+    def amplitude(self, frame):
+        return 0
+
+    duration = 0
+    pure = True
+
+def play(thing, ret=False, blocking=False):
     duration = thing.duration
     if duration == float('inf'):
         duration = 3*SAMPLE_RATE
@@ -10,8 +18,14 @@ def play(thing):
     for i in xrange(duration):
         out[i] = thing.amplitude(i)
 
-    sd.play(out, blocking=True)
+    sd.play(out, blocking=blocking)
+    if ret:
+        return out
 
+def test_scale(instrument, delay=0.5):
+    from .filter import SequencePure
+    from .notes import note
+    play(SequencePure((instrument(note(i)), i*delay) for i in xrange(8)))
 
 def play_song(song, sample):
     """
@@ -54,3 +68,4 @@ hot_cross_buns = [(Cs, .3, .8), (B, .3, 1), (A, .3, 1), (0, .3, 0),
    (A, .15, .8), (A, .15, .8), (A, .15, .8), (A, .15, .8),
    (B, .15, .8), (B, .15, .8), (B, .15, .8), (B, .15, .8),
    (Cs, .3, .8), (B, .3, 1), (A, .3, 1), (0, .3, 0)]
+

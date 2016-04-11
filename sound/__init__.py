@@ -5,4 +5,4 @@ sd.default.samplerate = SAMPLE_RATE
 sd.default.channels = 1
 
 from .sound import *
-from . import sample, envelope, filter, instrument
+from . import sample, envelope, filter, instrument, notes

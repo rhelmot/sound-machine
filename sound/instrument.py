@@ -1,4 +1,4 @@
-from .filter import Mix, Envelope, RingFilter, envelope, HighPassFilter
+from .filter import Mix, Envelope, RingFilter, envelope, HighPassFilter, FMFilter, LowPassFilter
 from .envelope import DecayEnvelope, ADSREnvelope
 from .sample import SineWave as Sine, harmonics, Noise
 
@@ -58,3 +58,11 @@ def bell(freq):
             attack_level=0.4
         )
 
+def bell2(freq):
+    return LowPassFilter(
+            envelope(
+                FMFilter(Sine, Sine(100. * freq / 220), carrier_freq=freq*2, mod_quantity=50),
+                decay=0.3
+            ),
+            0.1
+        )

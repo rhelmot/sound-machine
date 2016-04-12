@@ -247,6 +247,7 @@ class FMFilter(Sound):
         self.pure = sample_carrier.pure and modulator.pure
         self.period = int(sample_carrier.period)
         self.trigger = 0
+        self.trigger_state = True
         self.pure = False # :/
 
     def _amplitude(self, frame, tframe):
@@ -256,8 +257,12 @@ class FMFilter(Sound):
 
     def amplitude(self, frame):
         out = self._amplitude(frame, frame - self.trigger)
-        #if out > 0:
-        #    if self._amplitude(frame - 1, frame - 1 - self.trigger) <= 0:
-        #        self.trigger = frame - 1
+        if out > 0 and not self.trigger_state:
+            if self._amplitude(frame - 1, frame - 1 - self.trigger) <= 0:
+                self.trigger = frame
+                self.trigger_state = True
+        elif out < 0 and self.trigger_state:
+            if self._amplitude(frame - 1, frame - 1 - self.trigger) >= 0:
+                self.trigger_state = False
 
         return out

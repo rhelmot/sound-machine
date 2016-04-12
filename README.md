@@ -18,6 +18,7 @@ sound.play(sound.instrument.kickdrum())
 sound.play(sound.instrument.xylophone(440))
 sound.play(sound.instrument.square_violin(220, 4))
 sound.play(sound.instrument.bell(220))
+sound.play(sound.instrument.bell2(220))
 sound.test_scale(sound.instrument.sine_hit)
 
 d = sound.instrument.kickdrum
@@ -31,4 +32,4 @@ Take a look at the content of `instrument.py` to see how these things happen.
 
 The idea behind some things being pure and others being impure has to do with whether you're allowed to access samples out-of-order. If a sound, for example an infinite-impulse-response filter, needs to keep state about what it's output previously, you may not ask about its samples out-of-order.
 
-Some filters are designed to work with pure or impure sounds. The Sequence and Loop filters are good examples of this.
+Some filters have two versions, designed to work with pure or impure sounds. The Sequence and Loop filters are good examples of this.

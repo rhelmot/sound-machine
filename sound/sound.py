@@ -10,7 +10,7 @@ class Sound(object):
     duration = 0
     pure = True
 
-def play(thing, ret=False, blocking=False):
+def play(thing, ret=False, blocking=True):
     duration = thing.duration
     if duration == float('inf'):
         duration = 3*SAMPLE_RATE

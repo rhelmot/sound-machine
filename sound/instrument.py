@@ -52,7 +52,7 @@ def square_violin(freq, sustain):
 
 def bell(freq):
     return envelope(
-            RingFilter(harmonics(freq, (1,2,1.5))),
+            RingFilter(harmonics(freq, (2,3,4))),
             decay=0.1,
             attack=0.001,
             attack_level=0.4

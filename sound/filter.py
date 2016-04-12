@@ -223,3 +223,41 @@ class Loop(Sound):
             dframe += self.length
 
         return out
+
+class AMFilter(Sound):
+    def __init__(self, carrier, modulator, mod_quantity=0.2):
+        self.carrier = carrier
+        self.modulator = modulator
+        self.mod_quantity = mod_quantity
+        self.pure = carrier.pure and modulator.pure
+        self.duration = min(carrier.duration, modulator.duration)
+
+    def amplitude(self, frame):
+        return (1 + self.mod_quantity * self.modulator.amplitude(frame))*self.carrier.amplitude(frame)
+
+class FMFilter(Sound):
+    def __init__(self, carrier_class, modulator, carrier_freq=440, mod_quantity=300):
+        self.carrier_class = carrier_class
+        self.modulator = modulator
+        self.carrier_freq = carrier_freq
+        self.mod_quantity = mod_quantity
+
+        sample_carrier = carrier_class(carrier_freq)
+        self.duration = min(sample_carrier.duration, modulator.duration)
+        self.pure = sample_carrier.pure and modulator.pure
+        self.period = int(sample_carrier.period)
+        self.trigger = 0
+        self.pure = False # :/
+
+    def _amplitude(self, frame, tframe):
+        return self.carrier_class(
+                self.carrier_freq + self.mod_quantity * self.modulator.amplitude(frame)
+            ).amplitude(tframe)
+
+    def amplitude(self, frame):
+        out = self._amplitude(frame, frame - self.trigger)
+        #if out > 0:
+        #    if self._amplitude(frame - 1, frame - 1 - self.trigger) <= 0:
+        #        self.trigger = frame - 1
+
+        return out

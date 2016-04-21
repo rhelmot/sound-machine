@@ -1,19 +1,17 @@
 import numpy
 
 from . import sd, SAMPLE_RATE
+from .signal import Signal
 
-class Sound(object):
-    # pylint: disable=unused-argument,no-self-use
-    def amplitude(self, frame):
-        return 0
-
-    duration = 0
-    pure = True
+class Sound(Signal):
+    pass
 
 def play(thing, ret=False, blocking=True):
     duration = thing.duration
     if duration == float('inf'):
         duration = 3*SAMPLE_RATE
+    else:
+        duration = int(duration)
     out = numpy.empty((duration, 1))
     for i in xrange(duration):
         out[i] = thing.amplitude(i)
@@ -64,8 +62,8 @@ B = A*WHOLE_STEP
 Cs = B*WHOLE_STEP
 
 hot_cross_buns = [(Cs, .3, .8), (B, .3, 1), (A, .3, 1), (0, .3, 0),
-   (Cs, .3, .8), (B, .3, 1), (A, .3, 1), (0, .3, 0),
-   (A, .15, .8), (A, .15, .8), (A, .15, .8), (A, .15, .8),
-   (B, .15, .8), (B, .15, .8), (B, .15, .8), (B, .15, .8),
-   (Cs, .3, .8), (B, .3, 1), (A, .3, 1), (0, .3, 0)]
+    (Cs, .3, .8), (B, .3, 1), (A, .3, 1), (0, .3, 0),
+    (A, .15, .8), (A, .15, .8), (A, .15, .8), (A, .15, .8),
+    (B, .15, .8), (B, .15, .8), (B, .15, .8), (B, .15, .8),
+    (Cs, .3, .8), (B, .3, 1), (A, .3, 1), (0, .3, 0)]
 

@@ -57,8 +57,7 @@ class Digitar(Sample):
         self.sample_window = None
         self.cur_frame = None
         self.new_buffer()
-
-    pure = False
+        self.pure = False
 
     def new_buffer(self):
         self.sample_window = [random.random() * 2 - 1 for _ in xrange(self.buffersize)]

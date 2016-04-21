@@ -1,29 +1,8 @@
-import math as _math
-from . import envelope as _envelope, SAMPLE_RATE
-from .sound import Sound
+from . import SAMPLE_RATE
+from .sound import Signal
+from .sample import SineWave as _SineWave
 
-class Volume(Sound):
-    def __init__(self, src, vol):
-        self.src = src
-        self.vol = vol
-        self.pure = self.src.pure
-
-    def amplitude(self, frame):
-        return self.src.amplitude(frame)*self.vol
-
-class RingFilter(Sound):
-    def __init__(self, srcs):
-        """
-        srcs is a sequence of Sounds
-        """
-        self.srcs = list(srcs)
-        self.duration = min(x.duration for x in self.srcs)
-        self.pure = all(map(lambda x: x.pure, self.srcs))
-
-    def amplitude(self, frame):
-        return reduce(lambda x, y: x * y.amplitude(frame), self.srcs, 1)
-
-class LowPassFilter(Sound):
+class LowPassFilter(Signal):
     def __init__(self, src, beta=0.5, pure=False, iir=True):
         self.src = src
         self.beta = beta
@@ -51,7 +30,7 @@ class LowPassFilter(Sound):
         self.last_sample = out if self.iir else cur_sample
         return out
 
-class HighPassFilter(Sound):
+class HighPassFilter(Signal):
     def __init__(self, src, beta=0.5):
         self.src = src
         self.beta = beta
@@ -72,53 +51,7 @@ class HighPassFilter(Sound):
         self.last_out = out
         return out
 
-class Envelope(Sound):
-    def __init__(self, src, env):
-        self.src = src
-        self.env = env
-        self.duration = min(self.env.duration, self.src.duration)
-        self.pure = self.src.pure and self.env.pure
-
-    def amplitude(self, frame):
-        return self.src.amplitude(frame)*self.env.amplitude(frame)
-
-def envelope(sound, sustain=None,
-                    attack=0.01,
-                    decay=None,
-                    release=None,
-                    attack_level=1,
-                    sustain_level=0.7,
-                    decaying_sustain=True):
-    if decaying_sustain:
-        if decay is None: decay = 0.5
-        if release is None: release = 0.1
-        if sustain is None: sustain = _math.log(0.001, decay)
-        return Envelope(sound, _envelope.DecayEnvelope(attack, sustain, release, decay, attack_level=attack_level))
-    else:
-        if decay is None: decay = 0.1
-        if release is None: release = 0.3
-        if sustain is None: sustain = 1
-        return Envelope(sound, _envelope.ADSREnvelope(attack, decay, sustain, release, attack_level, sustain_level))
-
-class Mix(Sound):
-    def __init__(self, srcs):
-        """
-        srcs is a sequence of tuples of (Sound, level)
-
-        level can be any numerical value, the sum will be normalized to 1
-        """
-        total = float(sum(y for x, y in srcs))
-        self.srcs = [(x, y/total) for x, y in srcs]
-        self.duration = max(src.duration for src,_ in self.srcs)
-        self.pure = all(map(lambda x: x[0].pure, self.srcs))
-
-    def amplitude(self, frame):
-        out = 0.
-        for src, vol in self.srcs:
-            out += src.amplitude(frame) * vol
-        return out
-
-class SequencePure(Sound):
+class SequencePure(Signal):
     def __init__(self, srcs):
         """
         srcs is a sequence of tuples of (Sound, starttime)
@@ -142,7 +75,7 @@ class SequencePure(Sound):
             out += src.amplitude(frame - start)
         return out
 
-class Sequence(Sound):
+class Sequence(Signal):
     def __init__(self, srcs):
         """
         srcs is a sequence of tuples of (Sound, starttime)
@@ -175,7 +108,7 @@ class Sequence(Sound):
 
         return out
 
-class LoopImpure(Sound):
+class LoopImpure(Signal):
     def __init__(self, soundfunc, length):
         """
         soundfunc is a function that when called with 0 args returns the sample we want to loop
@@ -205,7 +138,7 @@ class LoopImpure(Sound):
 
         return out
 
-class Loop(Sound):
+class Loop(Signal):
     def __init__(self, sound, length):
         if not sound.pure:
             raise Exception("Use LoopImpure to loop an impure sound")
@@ -224,7 +157,7 @@ class Loop(Sound):
 
         return out
 
-class AMFilter(Sound):
+class AMFilter(Signal):
     def __init__(self, carrier, modulator, mod_quantity=0.2):
         self.carrier = carrier
         self.modulator = modulator
@@ -235,7 +168,7 @@ class AMFilter(Sound):
     def amplitude(self, frame):
         return (1 + self.mod_quantity * self.modulator.amplitude(frame))*self.carrier.amplitude(frame)
 
-class FMFilter(Sound):
+class FakeFMFilter(Signal):
     def __init__(self, carrier_class, modulator, carrier_freq=440, mod_quantity=300):
         self.carrier_class = carrier_class
         self.modulator = modulator
@@ -243,9 +176,9 @@ class FMFilter(Sound):
         self.mod_quantity = mod_quantity
 
         sample_carrier = carrier_class(carrier_freq)
+        if not sample_carrier.pure:
+            raise Exception("Can't use an impure carrier for a FM filter")
         self.duration = min(sample_carrier.duration, modulator.duration)
-        self.pure = sample_carrier.pure and modulator.pure
-        self.period = int(sample_carrier.period)
         self.trigger = 0
         self.trigger_state = True
         self.pure = False # :/
@@ -266,3 +199,28 @@ class FMFilter(Sound):
                 self.trigger_state = False
 
         return out
+
+class FMFilter(Signal):
+    def __init__(self, carrier, modulator, mod_quantity=300):
+        if not carrier.pure:
+            raise Exception("Can't use an impure carrier for a FM filter")
+        self.carrier = carrier
+        self.modulator = modulator
+        self.mod_quantity = mod_quantity
+        self.duration = carrier.duration
+        self.pure = modulator.pure
+
+    def amplitude(self, frame):
+        return self.carrier.amplitude(frame + self.mod_quantity * self.modulator.amplitude(frame))
+
+def RingFilter(data):
+    out = 1
+    for src in data:
+        out *= src
+    return out
+
+def bessel_wave(freq, alpha, beta):
+    '''
+    I literally don't care if this isn't technically a thing
+    '''
+    return FMFilter(_SineWave(freq), _SineWave(alpha), beta)

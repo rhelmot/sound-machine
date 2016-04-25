@@ -56,12 +56,15 @@ class Digitar(Sample):
         self.buffersize = 256
         self.sample_window = None
         self.cur_frame = None
+        self.phaseinc = frequency*1.30/440
+        self.phase = 0
         self.new_buffer()
         self.pure = False
 
     def new_buffer(self):
         self.sample_window = [random.random() * 2 - 1 for _ in xrange(self.buffersize)]
         self.cur_frame = 0
+        self.phase = 0
 
     def get_buffer(self, frame):
         return self.sample_window[frame % self.buffersize]
@@ -69,15 +72,23 @@ class Digitar(Sample):
     def set_buffer(self, frame, value):
         self.sample_window[frame % self.buffersize] = value
 
-    def amplitude(self, frame):
+    def tick(self):
+        self.set_buffer(self.cur_frame + 1, self.get_buffer(self.cur_frame) * 0.3 + self.get_buffer(self.cur_frame + 1) * 0.7)
+        self.cur_frame += 1
+        self.phase = (self.phase + self.phaseinc) % self.buffersize
+
+    def seek(self, frame):
         if frame < self.cur_frame:
             self.cur_frame = 0
-
         while self.cur_frame < frame:
-            self.set_buffer(self.cur_frame + 1, self.get_buffer(self.cur_frame) * 0.3 + self.get_buffer(self.cur_frame + 1) * 0.7)
-            self.cur_frame += 1
+            self.tick()
 
-        return self.get_buffer(self.cur_frame)
+    def amplitude(self, frame):
+        self.seek(frame)
+        s1 = self.get_buffer(int(self.phase))
+        s2 = self.get_buffer(int(self.phase) + 1)
+        interp = self.phase - int(self.phase)
+        return interp * s2 + (1-interp) * s1
 
 def harmonics(freq, ns=(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16), subsample=SineWave):
     return [subsample(freq*n) for n in ns]

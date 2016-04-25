@@ -1,7 +1,7 @@
 # pylint: disable=unused-argument
 from .filter import HighPassFilter, FakeFMFilter, LowPassFilter, FMFilter, RingFilter
 from .envelope import Decay, envelope, Envelope
-from .sample import SineWave as Sine, harmonics, Noise
+from .sample import SineWave as Sine, harmonics, Noise, Digitar
 from .sound import play as _play, SAMPLE_RATE
 from .note import Note
 
@@ -91,3 +91,8 @@ class ElectricBass(Instrument):
         sineA = Sine(freq)
         sustain = beats * self.beat * filling
         return FMFilter(sineA, Sine(freq/2) * envelope(200)) * envelope(decay=0.1, sustain=sustain)
+
+class Guitar(Instrument):
+    def _note(self, freq, beats, filling, legato):
+        digibase = Digitar(freq)
+        return digibase * Envelope(beats * self.beat * filling)

@@ -126,7 +126,7 @@ class InvertSignal(Signal):
 class ConstantSignal(Signal):
     def __init__(self, amplitude):
         self._amplitude = amplitude
-        self.duration = float('inf')
+        self.duration = 0 if amplitude == 0 else float('inf')
         self.pure = True
 
     def amplitude(self, frame):
@@ -144,7 +144,10 @@ class MixSignal(Signal):
             signals = signals[0]
         self.signals = list(signals)
         self.pure = all(s.pure for s in self.signals)
-        self.duration = max(s.duration for s in self.signals)
+        try:
+            self.duration = max(s.duration for s in self.signals if s.duration != float('inf'))
+        except ValueError:
+            self.duration = float('inf')
 
     def amplitude(self, frame):
         return sum(s.amplitude(frame) for s in self.signals)

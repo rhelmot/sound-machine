@@ -4,13 +4,10 @@ import json
 
 def main(filename, melodyname):
     jsoninfo = json.load(open(filename))
-    try:
-        melodies = jsoninfo["melodies"]
-        melody = melodies[melodyname]
+    melodies = jsoninfo["melodies"]
+    melody = melodies[melodyname]
 
-        play_melody(melody)
-    except:
-        print 'Something went wrong.'
+    play_melody(melody)
 
 def play_melody(melody):
     instrument = sound.instrument.SineSustain()
@@ -29,16 +26,14 @@ def play_melody(melody):
         else:
             print 'bad note:', note
 
-    import ipdb; ipdb.set_trace()
     sound.play(output[0])
 
 
-def usage():
-    print 'use this program!'
-    print 'please'
+def usage(argv0):
+    print 'Usage: %s filename melodyname' % argv0
 
 if __name__ == '__main__':
     if len(sys.argv) > 2:
         main(sys.argv[1], sys.argv[2])
     else:
-        usage()
+        usage(sys.argv[0])

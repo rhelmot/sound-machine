@@ -16,6 +16,8 @@ class Note(Sound):
         return Note(self.src + other.src, max(self.value, other.value), other.beat)
 
     def __mul__(self, other):
+        if type(other) in (float, int, long):
+            return Note(self.src * other, self.value, self.beat)
         return Note(self.src * other.src, max(self.value, other.value), other.beat)
 
     def __neg__(self):
@@ -29,3 +31,10 @@ class Note(Sound):
 
     def __and__(self, other):
         return self + (other >> self.value)
+
+    def __mod__(self, other):
+        if type(other) not in (int, float, long):
+            raise TypeError("Can't loop by %s" % repr(other))
+        if other == 0:
+            other = self.value
+        return Note(self.src % (other * self.beat / SAMPLE_RATE), float('inf'), self.beat)

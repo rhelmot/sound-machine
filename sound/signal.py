@@ -58,6 +58,31 @@ class Signal(object):
     def __and__(self, other):
         return self + (other >> (self.duration / SAMPLE_RATE))
 
+    def __mod__(self, other):
+        if type(other) not in (int, float, long):
+            raise TypeError("Can't loop by %s" % repr(other))
+        return LoopSignal(self, other * SAMPLE_RATE)
+
+class LoopSignal(Signal):
+    def __init__(self, src, length):
+        if not src.pure:
+            raise ValueError("You can't loop impure sounds, trust me on this one")
+        self.src = src
+        self.length = length
+        self.duration = float('inf')
+        self.pure = True
+
+    def amplitude(self, frame):
+        cur_frame = frame % self.length
+        out = 0.
+
+        while frame >= 0 and cur_frame < self.src.duration:
+            out += self.src.amplitude(cur_frame)
+            frame -= self.duration
+            cur_frame += self.duration
+
+        return out
+
 class DelaySignal(Signal):
     def __init__(self, src, delay):
         """

@@ -20,6 +20,20 @@ def play(thing, ret=False, blocking=True):
     if ret:
         return out
 
+def play_async(thing):
+    def cb(outdata, frames, time, status):
+        startframe = stream.timer
+        for i in xrange(frames):
+            outdata[i] = thing.amplitude(i+startframe)
+        stream.timer += frames
+        if stream.timer >= thing.duration:
+            raise sd.CallbackStop
+
+    stream = sd.OutputStream(callback=cb)
+    stream.timer = 0
+    stream.start()
+    return stream
+
 def test_scale(instrument, delay=0.5):
     from .filter import SequencePure
     from .notes import note

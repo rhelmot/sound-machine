@@ -76,6 +76,12 @@ class SquareViolin(Instrument):
         argenvelope = 0.5*legato*env + (1-legato)*env.adsr(0.01,0.05,0.1, sustain_level=0.5)
         return sum(Sine(freq*i) * 0.5/14 * 1./i for i in xrange(1, 15)) * argenvelope
 
+class ElectricHorn(Instrument):
+    def _note(self, freq, beats, filling, legato):
+        env = ADSR(0.05, 0.05, beats * self.beat * filling - 0.15, 0.15)
+        src = bessel_wave(freq, freq + 0.5, 30)
+        return env * src
+
 class Bell(Instrument):
     def _note(self, freq, *args):
         return envelope(decay=0.1, attack=0.001, attack_level=0.4) * RingFilter(harmonics(freq, (2,3,4)))

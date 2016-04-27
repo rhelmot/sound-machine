@@ -13,6 +13,8 @@ class Note(Sound):
         return self.src.amplitude(frame)
 
     def __add__(self, other):
+        if other == 0:
+            return self
         return Note(self.src + other.src, max(self.value, other.value), other.beat)
 
     def __mul__(self, other):

@@ -60,12 +60,12 @@ class MusicData(object):
             elif "rest" in note:
                 p = inst.rest(note['rest'])
             elif "chord" in note and "duration" in note:
-                p = sum(inst.note(sound.notes.notename(x), note['duration']) for x in note['chord'])
+                p = sum(inst.note(sound.notes.notename(x), note['duration']) for x in note['chord']) / len(note['chord'])
             elif "scope" in note:
                 if note['scope'] == 'persist':
                     instrument = inst
                 elif type(note['scope'] is list):
-                    p = self._parse_melody(inst, note['scope'])
+                    p = self._parse_melody(note['scope'], inst)
             else:
                 raise TypeError('note %s is of no known form!' % note)
 
@@ -76,7 +76,7 @@ class MusicData(object):
                     ct = note['loop'] - 1
                     cpy = copy.copy(note)
                     del cpy['loop']
-                    p &= self._parse_melody([cpy]*ct)
+                    p &= self._parse_melody([cpy]*ct, inst)
 
             if out is None:
                 out = p
@@ -89,8 +89,9 @@ class MusicData(object):
 def main(filename, melodyname):
     music = MusicData(filename)
     melody = music.melody(melodyname)
-    with sound.play_async(melody):
-        time.sleep(melody.duration / sound.SAMPLE_RATE)
+    sound.play(melody)
+    #with sound.play_async(melody):
+    #    time.sleep(melody.duration / sound.SAMPLE_RATE)
 
 def usage(argv0):
     print 'Usage: %s filename melodyname' % argv0

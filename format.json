@@ -43,6 +43,30 @@
 			{ "name": "A4", "duration": 1 },
 			{ "name": "E4", "duration": 1 },
 			{ "name": "A4", "duration": 2 }
+		], 
+
+		"complex": [
+			{ "tempo": 300, "volume": 0.5, "scope": "persist" },
+			{ "loop": 2, "scope": [
+				{ "name": "C4", "duration": 1 },
+				{ "name": "C4", "duration": 1 },
+				{ "rest": 1 }
+			]},
+			{ "loop": 2, "scope": [
+				{ "chord": ["C4", "Eb4"], "duration": 1 },
+				{ "chord": ["C4", "Eb4"], "duration": 1 },
+				{ "rest": 1 }
+			]},
+			{ "loop": 2, "scope": [
+				{ "chord": ["D4", "Gb4"], "duration": 1 },
+				{ "chord": ["D4", "Gb4"], "duration": 1 },
+				{ "rest": 1 }
+			]},
+			{ "loop": 2, "volume": 1, "scope": [
+				{ "chord": ["D4", "A4"], "duration": 1 },
+				{ "chord": ["D4", "A4"], "duration": 1 },
+				{ "rest": 1 }
+			]}
 		]
 	}
 }

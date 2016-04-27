@@ -9,6 +9,7 @@ class Instrument(object):
     def __init__(self, tempo=120):
         self.tempo = tempo
         self.articulation = 0.8
+        self.volume = 1
 
     @property
     def beat(self):
@@ -23,7 +24,7 @@ class Instrument(object):
         if articulation is None: articulation = self.articulation
         filling = min(1, articulation / 0.8)
         legato = max(0, (articulation - 0.8) / 0.2)
-        return Note(self._note(freq, beats, filling, legato), beats, self.beat * SAMPLE_RATE)
+        return Note(self._note(freq, beats, filling, legato), beats, self.beat * SAMPLE_RATE) * self.volume
 
     def _note(self, freq, beats, filling, legato):
         raise NotImplementedError

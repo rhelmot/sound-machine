@@ -50,7 +50,7 @@ class Signal(object):
     def __rshift__(self, other):
         if type(other) not in (int, float, long):
             raise TypeError("Can't shift by %s" % repr(other))
-        return DelaySignal(self, other*SAMPLE_RATE)
+        return DelaySignal(self, int(other*SAMPLE_RATE))
 
     def __lshift__(self, other):
         return self >> -other
@@ -65,21 +65,25 @@ class Signal(object):
 
 class LoopSignal(Signal):
     def __init__(self, src, length):
-        if not src.pure:
-            raise ValueError("You can't loop impure sounds, trust me on this one")
         self.src = src
-        self.length = length
+        self.length = int(length)
         self.duration = float('inf')
         self.pure = True
+        self.cache = None if src.pure else [None]*int(src.duration)
 
     def amplitude(self, frame):
         cur_frame = frame % self.length
         out = 0.
 
         while frame >= 0 and cur_frame < self.src.duration:
-            out += self.src.amplitude(cur_frame)
-            frame -= self.duration
-            cur_frame += self.duration
+            if self.cache is None:
+                out += self.src.amplitude(cur_frame)
+            else:
+                if self.cache[cur_frame] is None:
+                    self.cache[cur_frame] = self.src.amplitude(cur_frame)
+                out += self.cache[cur_frame]
+            frame -= self.length
+            cur_frame += self.length
 
         return out
 

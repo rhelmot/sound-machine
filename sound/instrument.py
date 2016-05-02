@@ -1,6 +1,6 @@
 # pylint: disable=unused-argument
-from .filter import HighPassFilter, FakeFMFilter, LowPassFilter, FMFilter, RingFilter
-from .envelope import Decay, envelope, Envelope
+from .filter import HighPassFilter, FakeFMFilter, LowPassFilter, FMFilter, RingFilter, bessel_wave
+from .envelope import Decay, envelope, Envelope, ADSR
 from .sample import SineWave as Sine, harmonics, Noise, Digitar
 from .sound import play as _play, SAMPLE_RATE
 from .note import Note

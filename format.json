@@ -46,27 +46,66 @@
 		], 
 
 		"complex": [
-			{ "tempo": 300, "volume": 0.5, "scope": "persist" },
+			{ "tempo": 300, "volume": 20, "scope": "persist" },
 			{ "loop": 2, "scope": [
-				{ "name": "C4", "duration": 1 },
-				{ "name": "C4", "duration": 1 },
+				{ "name": "C3", "duration": 1 },
+				{ "name": "C3", "duration": 1 },
 				{ "rest": 1 }
 			]},
 			{ "loop": 2, "scope": [
-				{ "chord": ["C4", "Eb4"], "duration": 1 },
-				{ "chord": ["C4", "Eb4"], "duration": 1 },
+				{ "chord": ["C3", "Eb3"], "duration": 1 },
+				{ "chord": ["C3", "Eb3"], "duration": 1 },
 				{ "rest": 1 }
 			]},
 			{ "loop": 2, "scope": [
-				{ "chord": ["D4", "Gb4"], "duration": 1 },
-				{ "chord": ["D4", "Gb4"], "duration": 1 },
+				{ "chord": ["D3", "Gb3"], "duration": 1 },
+				{ "chord": ["D3", "Gb3"], "duration": 1 },
 				{ "rest": 1 }
 			]},
-			{ "loop": 2, "volume": 1, "scope": [
-				{ "chord": ["D4", "A4"], "duration": 1 },
-				{ "chord": ["D4", "A4"], "duration": 1 },
+			{ "loop": 2, "volume": 30, "scope": [
+				{ "chord": ["D3", "A3"], "duration": 1 },
+				{ "chord": ["D3", "A3"], "duration": 1 },
 				{ "rest": 1 }
 			]}
 		]
+	},
+
+	"instruments": {
+		"sine toot": {
+			"envelope": {
+				"adsr_attack": 0.1,
+				"adsr_decay": 0.1,
+				"adsr_sustain": { "sub_1": "$DURATION", "sub_2": 0.3 },
+				"adsr_release": 0.1,
+				"adsr_level": 0.7
+			},
+			"envelope_source": {
+				"sine": "$FREQUENCY"
+			}
+		},
+		"electric bass": {
+			"envelope": {
+				"decay_speed": 10,
+				"decay_length": "$DURATION"
+			},
+			"envelope_source": {
+				"fm_carrier": { "sine": "$FREQUENCY" },
+				"fm_modulator": {
+					"envelope": {
+						"decay_speed": 2,
+						"decay_length": 200
+					},
+					"envelope_source": {
+						"sine": { "div_1": "$FREQUENCY", "div_2": 2.0 }
+					}
+				},
+				"fm_quantity": 300
+			}
+		}
+	},
+
+	"default_instruments": {
+		"frere_jaques": "sine toot",
+		"complex": "electric bass"
 	}
 }

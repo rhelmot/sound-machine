@@ -32,6 +32,7 @@ class Instrument(object):
     def play(self, *args):
         _play(self.note(*args))
 
+
 class SineSustain(Instrument):
     def _note(self, freq, beats, filling, legato):
         env = Envelope(beats * self.beat * filling)

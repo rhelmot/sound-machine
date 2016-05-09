@@ -56,7 +56,8 @@ class Digitar(Sample):
         self.buffersize = 256
         self.sample_window = None
         self.cur_frame = None
-        self.phaseinc = frequency*1.30/440
+        basefreq = SAMPLE_RATE * 1./self.buffersize
+        self.phaseinc = frequency / basefreq
         self.phase = 0
         self.new_buffer()
         self.pure = False

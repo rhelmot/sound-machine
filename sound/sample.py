@@ -50,10 +50,24 @@ class Noise(Sample):
     def amplitude(self, frame):
         return random.random() * 2 - 1
 
+class BrownNoise(Sample):
+    def __init__(self, fac=0.5):
+        super(BrownNoise, self).__init__(0)
+        self.prev = 0.
+        self.fac = float(fac)
+
+    def amplitude(self, frame):
+        self.prev += (random.random() * 2 - 1) * self.fac
+        if self.prev > 1: self.prev = 1.
+        elif self.prev < -1: self.prev = -1.
+        return self.prev
+
+
 class Digitar(Sample):
-    def __init__(self, frequency):
+    def __init__(self, frequency, wavesrc=None, buffersize=256):
+        self.wavesrc = wavesrc if wavesrc is not None else Noise()
         super(Digitar, self).__init__(frequency)
-        self.buffersize = 256
+        self.buffersize = buffersize
         self.sample_window = None
         self.cur_frame = None
         basefreq = SAMPLE_RATE * 1./self.buffersize
@@ -63,7 +77,7 @@ class Digitar(Sample):
         self.pure = False
 
     def new_buffer(self):
-        self.sample_window = [random.random() * 2 - 1 for _ in xrange(self.buffersize)]
+        self.sample_window = [self.wavesrc.amplitude(i) for i in xrange(self.buffersize)]
         self.cur_frame = 0
         self.phase = 0
 

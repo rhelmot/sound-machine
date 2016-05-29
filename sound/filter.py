@@ -1,4 +1,4 @@
-from . import SAMPLE_RATE
+from . import SAMPLE_RATE, signal
 from .sound import Signal
 from .sample import SineWave as _SineWave
 
@@ -29,6 +29,23 @@ class LowPassFilter(Signal):
         out = cur_sample * self.beta + self.last_sample * (1-self.beta)
         self.last_sample = out if self.iir else cur_sample
         return out
+
+class BetterLowPassFilter(Signal):
+    def __init__(self, src, *params):
+        self.params = list(params)
+        eq = float(sum(self.params))
+        self.params = [x / eq for x in self.params]
+        self.cache = [0.]*len(self.params)
+        self.pure = False
+        self.duration = src.duration
+        self.src = src
+
+    def amplitude(self, frame):
+        for i in xrange(len(self.cache) - 1):
+            self.cache[i] = self.cache[i+1]
+        self.cache[-1] = self.src.amplitude(frame)
+
+        return sum(x * y for x, y in zip(self.params, self.cache))
 
 class HighPassFilter(Signal):
     def __init__(self, src, beta=0.5):
@@ -121,15 +138,27 @@ class LoopImpure(Signal):
         self.pure = False
 
     def amplitude(self, frame):
+        if frame < 0: return 0
+
         self.lastframe += 1
         if self.lastframe != frame:
-            raise Exception("you're like. literally not allowed do that. use Loop if you want to access samples out of order.")
+            if frame < self.lastframe:
+                #print 'warning: rewinding LoopImpure'
+                self.lastframe = 0
+                self.active = []
+
+            if frame - self.lastframe > 50:
+                print 'warning: seeking LoopImpure %d frames' % (frame - self.lastframe)
+            self.lastframe -= 1
+            while self.lastframe + 1 < frame:
+                self.amplitude(self.lastframe + 1)
+            self.lastframe += 1
 
         if frame % self.length == 0:
             sound = self.soundfunc()
             self.active.append((sound, frame, frame + sound.duration))
 
-        if frame >= self.active[0][2]:
+        if len(self.active) > 0 and frame >= self.active[0][2]:
             self.active.pop(0)
 
         out = 0.
@@ -224,3 +253,29 @@ def bessel_wave(freq, alpha, beta):
     I literally don't care if this isn't technically a thing
     '''
     return FMFilter(_SineWave(freq), _SineWave(alpha), beta)
+
+class PitchShift(Signal):
+    def __init__(self, src, shift):
+        if isinstance(shift, (int, float, long)):
+            shift = signal.ConstantSignal(shift)
+        self.src = src
+        self.shift = shift
+        self.phase = 0
+
+        self.pure = False
+        self.duration = src.duration
+
+        self.done = False
+
+    def amplitude(self, frame):
+        self.phase += self.shift.amplitude(frame)
+        intpart = int(self.phase)
+        fracpart = self.phase - intpart
+        f1 = frame + intpart
+        f2 = f1 + 1
+        if f2 >= self.duration:
+            self.done = True
+
+        s1 = self.src.amplitude(f1)
+        s2 = self.src.amplitude(f2)
+        return s1 * (1-fracpart) + s2 * fracpart

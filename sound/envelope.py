@@ -8,6 +8,8 @@ class Envelope(Signal):
         self.pure = True
 
     def amplitude(self, frame):
+        if frame < 0:
+            return 0
         if frame < self.duration:
             return 1
         return 0
@@ -87,4 +89,18 @@ def envelope(sustain=None,
         if release is None: release = 0.3
         if sustain is None: sustain = 1
         return ADSR(attack, decay, sustain, release, attack_level, sustain_level)
+
+class Line(Envelope):
+    def __init__(self, start, end, duration):
+        self.start = start
+        self.end = end
+        self.duration = duration * SAMPLE_RATE
+        self.pure = True
+
+    def amplitude(self, frame):
+        if frame < 0:
+            return self.start
+        if frame >= self.duration:
+            return self.end
+        return (float(frame) / self.duration) * (self.end - self.start) + self.start
 

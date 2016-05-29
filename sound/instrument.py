@@ -1,5 +1,5 @@
 # pylint: disable=unused-argument
-from .filter import HighPassFilter, FakeFMFilter, LowPassFilter, FMFilter, RingFilter, bessel_wave
+from .filter import HighPassFilter, FakeFMFilter, LowPassFilter, FMFilter, RingFilter, bessel_wave, PitchShift
 from .envelope import Decay, envelope, Envelope, ADSR
 from .sample import SineWave as Sine, harmonics, Noise, Digitar
 from .sound import play as _play, SAMPLE_RATE
@@ -24,7 +24,9 @@ class Instrument(object):
         if articulation is None: articulation = self.articulation
         filling = min(1, articulation / 0.8)
         legato = max(0, (articulation - 0.8) / 0.2)
-        return Note(self._note(freq, beats, filling, legato), beats, self.beat * SAMPLE_RATE) * self.volume
+        n = Note(self._note(freq, beats, filling, legato), beats, self.beat * SAMPLE_RATE) * self.volume
+        n.author = self
+        return n
 
     def _note(self, freq, beats, filling, legato):
         raise NotImplementedError
@@ -64,6 +66,13 @@ class Shaker(Instrument):
     def _note(self, *args):
         return HighPassFilter(Noise(), 0.1) * envelope(decay=0.0001)
 
+class BassDrum(Instrument):
+    def _note(self, freq, *args):
+        basesound = Sine(freq)
+        pitchdecay = envelope(1, decay=0.0001)
+        ampdecay = envelope(1, decay=0.0000001)
+        return PitchShift(basesound, pitchdecay) * ampdecay
+
 class SquareViolin(Instrument):
     def _note(self, freq, beats, filling, legato):
         #attack = min(0.5, sustain/10.)
@@ -75,7 +84,13 @@ class SquareViolin(Instrument):
         #               decaying_sustain=False)
         env = Envelope(beats * self.beat * filling)
         argenvelope = 0.5*legato*env + (1-legato)*env.adsr(0.01,0.05,0.1, sustain_level=0.5)
-        return sum(Sine(freq*i) * 0.5/14 * 1./i for i in xrange(1, 15)) * argenvelope
+        return sum(Sine(freq*i) * 0.5 * 1./i for i in xrange(1, 5)) * argenvelope
+
+class HardDisk(Instrument):
+    def _note(self, freq, beats, filling, legato):
+        sample = Digitar(freq, buffersize=2000) << 0.1
+        env = Envelope(beats * self.beat * filling)
+        return sample * env
 
 class ElectricHorn(Instrument):
     def _note(self, freq, beats, filling, legato):

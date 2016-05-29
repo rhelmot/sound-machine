@@ -56,12 +56,27 @@ class Signal(object):
         return self >> -other
 
     def __and__(self, other):
-        return self + (other >> (self.duration / SAMPLE_RATE))
+        return self + (other >> (float(self.duration) / SAMPLE_RATE))
 
     def __mod__(self, other):
         if type(other) not in (int, float, long):
             raise TypeError("Can't loop by %s" % repr(other))
         return LoopSignal(self, other * SAMPLE_RATE)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            if key.step is not None:
+                raise KeyError(key)
+            start = 0 if key.start is None else key.start
+            stop = float(self.duration)/SAMPLE_RATE if key.stop is None else key.stop
+            return SigSlice(self, start, stop)
+        else:
+            raise KeyError(key)
+
+    def purify(self, preprocess=False):
+        if not preprocess and self.pure:
+            return self
+        return Purifier(self, preprocess=preprocess)
 
 class LoopSignal(Signal):
     def __init__(self, src, length):
@@ -103,7 +118,7 @@ class DelaySignal(Signal):
     def __rshift__(self, other):
         if type(other) not in (int, float, long):
             raise TypeError("Can't shift by %s" % repr(other))
-        return DelaySignal(self._src, self._delay + other*SAMPLE_RATE)
+        return DelaySignal(self._src, self._delay + int(other*SAMPLE_RATE))
 
 class SequenceSignal(Signal):
     def __init__(self, *data):
@@ -130,7 +145,7 @@ class SequenceSignal(Signal):
     def __rshift__(self, other):
         if type(other) not in (int, float, long):
             raise TypeError("Can't shift by %s" % repr(other))
-        return SequenceSignal((src, start + other*SAMPLE_RATE) for (src, start, _) in self.srcs)
+        return SequenceSignal((src, start + int(other*SAMPLE_RATE)) for (src, start, _) in self.srcs)
 
     def __add__(self, other):
         if type(other) is DelaySignal:
@@ -195,3 +210,56 @@ class EnvelopeSignal(Signal):
 
     def amplitude(self, frame):
         return self.src.amplitude(frame)*self.env.amplitude(frame)
+
+class Purifier(Signal):
+    def __init__(self, src, length=None, preprocess=False):
+        if length is None:
+            if src.duration == float('inf'):
+                raise ValueError("Cannot purify infinity")
+            length = src.duration
+        else:
+            length = int(length * SAMPLE_RATE)
+        self.nextf = 0
+        self.duration = length
+        self.storage = [None]*int(self.duration)
+        self.pure = True
+        self.src = src
+
+        if preprocess:
+            self.amplitude(self.duration - 1)
+
+    def amplitude(self, frame):
+        if frame < 0: return 0
+        if frame >= self.duration: return 0
+        while frame >= self.nextf:
+            self.storage[self.nextf] = self.src.amplitude(self.nextf)
+            self.nextf += 1
+        return self.storage[frame]
+
+class SigSlice(Signal):
+    def __init__(self, src, from_time, to_time, relative=False):
+        self.from_frame = int(from_time * SAMPLE_RATE)
+        try:
+            self.to_frame = int(to_time * SAMPLE_RATE)
+        except OverflowError:
+            self.to_frame = float('inf')
+
+        if relative:
+            self.to_frame += self.from_frame
+        self.duration = self.to_frame - self.from_frame
+        self.pure = src.pure
+        self.src = src
+
+    def amplitude(self, frame):
+        if frame < 0: return 0
+        if frame >= self.duration: return 0
+        return self.src.amplitude(frame + self.from_frame)
+
+class Reverse(Signal):
+    def __init__(self, src):
+        self.src = src
+        self.duration = src.duration
+
+    def amplitude(self, frame):
+        return self.src.amplitude(self.duration - frame - 1)
+

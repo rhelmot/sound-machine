@@ -1,3 +1,7 @@
+# This is a parser for json files that describe melodies
+# the provided format.json provides two sample melodies
+# the format can define its own instruments
+
 import sound
 import time
 import sys

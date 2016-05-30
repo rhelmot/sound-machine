@@ -12,7 +12,7 @@ class Signal(object):
         if other == 0:
             return self
         if type(other) is DelaySignal:
-            return SequenceSignal((self, 0), (other._src, other._delay))
+            return SequenceSignal((self, 0), (other.src, other.delay))
         return MixSignal(self, ConstantSignal.wrap(other))
 
     def __radd__(self, other):
@@ -107,18 +107,24 @@ class DelaySignal(Signal):
         """
         delay is in samples
         """
-        self._src = src
-        self._delay = delay
-        self.duration = src.duration + int(self._delay)
+        self.src = src
+        self.delay = delay
+        self.duration = src.duration + int(self.delay)
         self.pure = src.pure
 
     def amplitude(self, frame):
-        return self._src.amplitude(frame - self._delay)
+        return self.src.amplitude(frame - self.delay)
 
     def __rshift__(self, other):
         if type(other) not in (int, float, long):
             raise TypeError("Can't shift by %s" % repr(other))
-        return DelaySignal(self._src, self._delay + int(other*SAMPLE_RATE))
+        return DelaySignal(self.src, self.delay + int(other*SAMPLE_RATE))
+
+    def __add__(self, other):
+        if type(other) is DelaySignal:
+            return SequenceSignal((self.src, self.delay), (other.src, other.delay))
+        else:
+            return super(DelaySignal, self).__add__(other)
 
 class SequenceSignal(Signal):
     def __init__(self, *data):
@@ -149,7 +155,7 @@ class SequenceSignal(Signal):
 
     def __add__(self, other):
         if type(other) is DelaySignal:
-            return SequenceSignal((other._src, other._delay), *((src, start) for (src, start, _) in self.srcs))
+            return SequenceSignal((other.src, other.delay), *((src, start) for (src, start, _) in self.srcs))
         elif type(other) is SequenceSignal:
             return SequenceSignal((src, start) for src, start, _ in self.srcs + other.srcs)
         else:

@@ -1,3 +1,6 @@
+# This is a song I composed! It's very complex here in the file because it's a very complex tune.
+# The song is produced by the function main_tune.
+
 # pylint: disable=undefined-variable,wildcard-import,unused-wildcard-import,invalid-slice-index
 import sound
 from sound.notes import *

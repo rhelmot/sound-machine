@@ -129,7 +129,7 @@ class Digitar(Sample):
         self.pure = False
 
     def new_buffer(self):
-        self.sample_window = [self.wavesrc.amplitude(i) for i in xrange(self.buffersize)]
+        self.sample_window = [self.wavesrc.amplitude(i) for i in range(self.buffersize)]
         self.cur_frame = 0
         self.phase = 0
 

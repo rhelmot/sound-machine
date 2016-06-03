@@ -169,7 +169,7 @@ class GuitarStrummer(KeyedAsyncPlayer):
         'B': [0, 0, 4, 4, 4, 2]
     }
 
-    base_frequencies = map(notename, ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'])
+    base_frequencies = list(map(notename, ['E2', 'A2', 'D3', 'G3', 'B3', 'E4']))
 
     def strum_down(self, chord, delay=200):
         """
@@ -180,7 +180,7 @@ class GuitarStrummer(KeyedAsyncPlayer):
         :param delay:   The time inbetween chord plucks, in frames. Optional.
         """
         freqs = [None if n is None else 2**(n/12.)*b for n, b in zip(self.chords[chord], self.base_frequencies)]
-        delays = [n * delay for n in xrange(6)]
+        delays = [n * delay for n in range(6)]
         for i, (f, d) in enumerate(zip(freqs, delays)):
             if f is not None:
                 self.queue(d, (self.sample(f), i))
@@ -194,7 +194,7 @@ class GuitarStrummer(KeyedAsyncPlayer):
         :param delay:   The time inbetween chord plucks, in frames. Optional.
         """
         freqs = [None if n is None else 2**(n/12.)*b for n, b in zip(self.chords[chord], self.base_frequencies)]
-        delays = [n * delay for n in reversed(xrange(6))]
+        delays = [n * delay for n in reversed(range(6))]
         for i, (f, d) in enumerate(zip(freqs, delays)):
             if f is not None:
                 self.queue(d, (self.sample(f), i))

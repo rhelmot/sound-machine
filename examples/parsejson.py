@@ -9,7 +9,10 @@ import sys
 import json
 import copy
 
-num = (int, long, float)
+try:
+    num = (int, long, float)
+except NameError:
+    num = (int, float)
 Sig = sound.signal.Signal
 available_signals = [
         (lambda sine: sound.sample.SineWave(sine), (num,)),
@@ -61,7 +64,7 @@ class UserInstrument(sound.instrument.Instrument):
 
     @staticmethod
     def parse_signal(name, signal, env):
-        if type(signal) in (int, float, long):
+        if type(signal) in num:
             return signal
         elif type(signal) in (str, unicode):
             if signal in env:

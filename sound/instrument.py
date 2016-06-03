@@ -130,7 +130,7 @@ class SquareViolin(Instrument):
         #               decaying_sustain=False)
         env = Envelope(beats * self.beat * filling)
         argenvelope = 0.5*legato*env + (1-legato)*env.adsr(0.01,0.05,0.1, sustain_level=0.5)
-        return sum(Sine(freq*i) * 0.5 * 1./i for i in xrange(1, 5)) * argenvelope
+        return sum(Sine(freq*i) * 0.5 * 1./i for i in range(1, 5)) * argenvelope
 
 class HardDisk(Instrument):
     """

@@ -3,6 +3,11 @@ from .signal import ConstantSignal, Signal
 
 __all__ = ('Note',)
 
+try:
+    numty = (int, float, long)
+except NameError:
+    numty = (int, float)
+
 class Note(Signal):
     """
     An abstraction over the signal base class to add timing information.
@@ -32,7 +37,7 @@ class Note(Signal):
         return Note(self.src + other.src, max(self.value, other.value), other.beat)
 
     def __mul__(self, other):
-        if type(other) in (float, int, long):
+        if type(other) in numty:
             return Note(self.src * other, self.value, self.beat)
         return Note(self.src * other.src, max(self.value, other.value), other.beat)
 
@@ -40,7 +45,7 @@ class Note(Signal):
         return Note(-self.src, self.value, self.beat)
 
     def __rshift__(self, other):
-        if type(other) not in (int, float, long):
+        if type(other) not in numty:
             raise TypeError("Can't shift by %s" % repr(other))
         realshift = other * self.beat / SAMPLE_RATE
         return Note(self.src >> realshift, self.value + other, self.beat)
@@ -49,7 +54,7 @@ class Note(Signal):
         return self + (other >> self.value)
 
     def __mod__(self, other):
-        if type(other) not in (int, float, long):
+        if type(other) not in numty:
             raise TypeError("Can't loop by %s" % repr(other))
         if other == 0:
             other = self.value

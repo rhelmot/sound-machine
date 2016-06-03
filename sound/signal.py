@@ -9,6 +9,11 @@ except ImportError:
 
 from . import SAMPLE_RATE, sd
 
+try:
+    numty = (int, float, long)
+except NameError:
+    numty = (int, float)
+
 __all__ = ('Signal', 'LoopSignal', 'DelaySignal', 'SequenceSignal', 'InvertSignal', 'ConstantSignal', 'MixSignal', 'EnvelopeSignal', 'Purifier', 'SliceSignal', 'ReverseSignal')
 
 class Signal(object):
@@ -62,7 +67,7 @@ class Signal(object):
         """
         def cb(outdata, frames, time, status):  # pylint: disable=unused-argument
             startframe = stream.timer
-            for i in xrange(frames):
+            for i in range(frames):
                 outdata[i] = self.amplitude(i+startframe)
             stream.timer += frames
             if stream.timer >= self.duration:
@@ -96,7 +101,7 @@ class Signal(object):
         :param progress:    Whether to show a progress bar for rendering
         """
         if progress and not progressbar:
-            print 'Install the progressbar module to see a progress bar for rendering'
+            print('Install the progressbar module to see a progress bar for rendering')
             progress = False
 
         duration = self.duration if length is None else length * SAMPLE_RATE
@@ -108,7 +113,7 @@ class Signal(object):
 
         pbar = progressbar.ProgressBar(widgets=['Rendering: ', progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.ETA()], maxval=duration-1).start() if progress else None
 
-        for i in xrange(duration):
+        for i in range(duration):
             out[i] = self.amplitude(i)
             if pbar: pbar.update(i)
         if pbar: pbar.finish()
@@ -155,9 +160,12 @@ class Signal(object):
         return self * other
 
     def __div__(self, other):
-        if type(other) not in (int, float, long):
+        if type(other) not in numty:
             raise TypeError("Can't divide by %s" % repr(other))
         return self * (1./other)
+
+    __floordiv__ = __div__
+    __truediv__ = __div__
 
     def __rdiv__(self, other):
         raise TypeError("Can't divide by %s" % repr(self))
@@ -166,7 +174,7 @@ class Signal(object):
         return InvertSignal(self)
 
     def __rshift__(self, other):
-        if type(other) not in (int, float, long):
+        if type(other) not in numty:
             raise TypeError("Can't shift by %s" % repr(other))
         return DelaySignal(self, int(other*SAMPLE_RATE))
 
@@ -177,7 +185,7 @@ class Signal(object):
         return self + (other >> (float(self.duration) / SAMPLE_RATE))
 
     def __mod__(self, other):
-        if type(other) not in (int, float, long):
+        if type(other) not in numty:
             raise TypeError("Can't loop by %s" % repr(other))
         return LoopSignal(self, other)
 
@@ -247,7 +255,7 @@ class DelaySignal(Signal):
         return self.src.amplitude(frame - self.delay)
 
     def __rshift__(self, other):
-        if type(other) not in (int, float, long):
+        if type(other) not in numty:
             raise TypeError("Can't shift by %s" % repr(other))
         return DelaySignal(self.src, self.delay + int(other*SAMPLE_RATE))
 
@@ -270,7 +278,7 @@ class SequenceSignal(Signal):
         if len(data) == 1 and hasattr(data[0], '__iter__'):
             data = data[0]
         data = list(data)
-        assert all(type(x[1]) in (int, float, long) for x in data)
+        assert all(type(x[1]) in numty for x in data)
         self.srcs = sorted(((src, start, start + src.duration) for src, start in data), key=lambda x: x[1])
         self.duration = max(src[2] for src in self.srcs)
         self.pure = all(src[0].pure for src in self.srcs)
@@ -284,7 +292,7 @@ class SequenceSignal(Signal):
         return out
 
     def __rshift__(self, other):
-        if type(other) not in (int, float, long):
+        if type(other) not in numty:
             raise TypeError("Can't shift by %s" % repr(other))
         return SequenceSignal((src, start + int(other*SAMPLE_RATE)) for (src, start, _) in self.srcs)
 
@@ -325,7 +333,7 @@ class ConstantSignal(Signal):
 
     @staticmethod
     def wrap(val):
-        if type(val) in (int, long, float):
+        if type(val) in numty:
             return ConstantSignal(val)
         return val
 

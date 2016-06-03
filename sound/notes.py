@@ -51,7 +51,7 @@ def notename(name):
     octavenum = int(octave)
     return note(degree, octavenum, accidental=accidental, key='C', scale='major')
 
-for _octave in xrange(10):
+for _octave in range(10):
     for _letter in 'ABCDEFG':
         for _accidental in ['', 'b', 's']:
             _name = _letter + _accidental + str(_octave)

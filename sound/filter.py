@@ -3,6 +3,11 @@ from .sample import SineWave
 
 __all__ = ('LowPassFilter', 'BetterLowPassFilter', 'HighPassFilter', 'FakeFMFilter', 'FMFilter', 'ring_filter', 'bessel_wave', 'PitchShift')
 
+try:
+    numty = (int, float, long)
+except NameError:
+    numty = (int, float)
+
 class LowPassFilter(Signal):
     """
     Filter the argument signal, cutting out higher-frequency components.
@@ -54,7 +59,7 @@ class BetterLowPassFilter(Signal):
         self.src = src
 
     def amplitude(self, frame):
-        for i in xrange(len(self.cache) - 1):
+        for i in range(len(self.cache) - 1):
             self.cache[i] = self.cache[i+1]
         self.cache[-1] = self.src.amplitude(frame)
 
@@ -168,7 +173,7 @@ class PitchShift(Signal):
     enveloped sound is a bad idea, you need to put this under the envelope.
     """
     def __init__(self, src, shift):
-        if isinstance(shift, (int, float, long)):
+        if isinstance(shift, numty):
             shift = ConstantSignal(shift)
         self.src = src
         self.shift = shift - 1

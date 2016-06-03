@@ -21,7 +21,7 @@ def strum_stuff(guitar, chord, length, bpm, basebeat=0):
 
 def n_of_them(them, n):
     o = them
-    for _ in xrange(n - 1):
+    for _ in range(n - 1):
         o &= them
     return o
 
@@ -57,7 +57,7 @@ def glitchmobile(src, *args):
             _, length, times = arg
             length = length * SAMPLE_RATE
             piece = sampslice(src, current, length)
-            for _ in xrange(times):
+            for _ in range(times):
                 pieces.append(piece)
             current += length
         elif arg[0] == 'skip':
@@ -154,7 +154,7 @@ def main_tune():
 
     md = make_digi
     n1 = md(C4 - 10, 50, 1)
-    for i in xrange(30):
+    for i in range(30):
         n1 &= md(C4 - 10 + i/2., 50 + i*19, (2**-(i/7.)))
 
     guitar = sound.async.GuitarStrummer(lambda f: Digitar(f, buffersize=350))

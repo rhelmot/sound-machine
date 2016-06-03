@@ -1,11 +1,26 @@
 # sound-machine
 
-Python library for musical audio synthesis
+This is a library to do audio synthesis and music composition.
+Its goal is to make the interface as simple as possible to use with as short a learning curve as possible.
+
+It is written in pure python, and supports both python 2 and 3.
 
 ## Installation
 
 ```bash
 $ pip install sound-machine
+```
+
+You _probably_ want to use the PyPy interpreter, expecially if you expect to do any sort of real-time synthesis.
+Here are some instructions on setting up a virtual environment with pypy.
+
+First, install pypy and the pypy-dev package (or equivilant) from your OS's package manager.
+Then, make sure you have `virtualenvwrapper` installed.
+Finally:
+
+```bash
+mkvirtualenv --python=`which pypy` sound
+pip install sound-machine
 ```
 
 ## Usage

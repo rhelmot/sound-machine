@@ -23,6 +23,8 @@ mkvirtualenv --python=`which pypy` sound
 pip install sound-machine
 ```
 
+At time of writing, the python package index is suffering some pretty nasty technical difficulties, so if the above install commands don't work for you, the `pip install sound-machine` line can be replaced with `pip install git+https://github.com/rhelmot/sound-machine.git`.
+
 ## Usage
 
 This is a python module.

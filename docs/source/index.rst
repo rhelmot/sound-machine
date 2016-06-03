@@ -13,6 +13,8 @@ output backend, but it can also write to wave files and output raw sample data.
 Sound Machine is designed to make it very very easy to synthesize sounds and construct melodies,
 once you understand its interfaces.
 
+Install with ``pip install sound-machine``, view source at `github <https://github.com/rhelmot/sound-machine>`_
+
 Contents:
 
 .. toctree::

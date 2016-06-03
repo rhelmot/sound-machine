@@ -1,8 +1,22 @@
-from .sound import Sound, SAMPLE_RATE
-from .signal import ConstantSignal
+from . import SAMPLE_RATE
+from .signal import ConstantSignal, Signal
 
-class Note(Sound):
+__all__ = ('Note',)
+
+class Note(Signal):
+    """
+    An abstraction over the signal base class to add timing information.
+    The idea is that a note has a signal and then the value that that signal should be
+    used as, in beats, in addition to the length of a beat.
+
+    All the binary operators on Sample objects now work with beats instead of seconds.
+    """
     def __init__(self, src, value, beat):
+        """
+        :param src:     The signal to use as a source for the note
+        :param value:   The value of the note in beats
+        :param beat:    The length of a beat in samples
+        """
         self.src = ConstantSignal.wrap(src)
         self.value = value
         self.beat = beat

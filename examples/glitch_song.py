@@ -6,7 +6,7 @@ import sound
 from sound.notes import *
 from sound.instrument import Instrument, Guitar
 from sound.sample import Digitar, SquareWave, SAMPLE_RATE
-from sound.signal import SigSlice, Purifier, Reverse, ConstantSignal
+from sound.signal import SliceSignal, Purifier, ReverseSignal, ConstantSignal
 
 def strum_stuff(guitar, chord, length, bpm, basebeat=0):
     base = basebeat * SAMPLE_RATE * 60 / bpm
@@ -26,10 +26,10 @@ def n_of_them(them, n):
     return o
 
 def sampslice(src, start, length):
-    return SigSlice(src, float(start)/SAMPLE_RATE, float(length)/SAMPLE_RATE, True)
+    return SliceSignal(src, float(start)/SAMPLE_RATE, float(length)/SAMPLE_RATE, True)
 
 def pitch_right(src, shift):
-    ps = sound.filter.PitchShift(src, shift)
+    ps = sound.filter.PitchShift(src, shift + 1)
     dat = [None]*int(src.duration*10)
     i = 0
     while not ps.done:
@@ -91,7 +91,7 @@ def glitchmobile(src, *args):
             length *= SAMPLE_RATE
             where = where*SAMPLE_RATE + current
             piece = sampslice(src, where, length)
-            pieces.append(Reverse(piece))
+            pieces.append(ReverseSignal(piece))
         elif arg[0] == 'cut':
             cut = True
             break
@@ -116,7 +116,7 @@ def make_digi(f, bufs, length):
     return Digitar(f, buffersize=bufs)[:length]
 
 def main_tune():
-    guitar = sound.sound.GuitarStrummer(Digitar)
+    guitar = sound.async.GuitarStrummer(Digitar)
     strum_stuff(guitar, 'C', 2, 140)
     strum_stuff(guitar, 'G', 2, 140, 2)
     strum_stuff(guitar, 'Am', 2, 140, 4)
@@ -157,7 +157,7 @@ def main_tune():
     for i in xrange(30):
         n1 &= md(C4 - 10 + i/2., 50 + i*19, (2**-(i/7.)))
 
-    guitar = sound.sound.GuitarStrummer(lambda f: Digitar(f, buffersize=350))
+    guitar = sound.async.GuitarStrummer(lambda f: Digitar(f, buffersize=350))
     guitar.strum_down('C', 23000)
     guitar.queue(23000*6.5, (guitar.strum_down, ('F',400)))
     buf = guitar[:float(n1.duration)/SAMPLE_RATE - 6].purify(True)
@@ -169,7 +169,7 @@ def main_tune():
     strum_stuff(guitar, 'G', 2, 140, 2)
     strum_stuff(guitar, 'Am', 2, 140, 4)
     strum_stuff(guitar, 'F', 2, 140, 6)
-    buf2 = SigSlice(guitar, float(startf)/SAMPLE_RATE, 60./140*8, True).purify(True)
+    buf2 = SliceSignal(guitar, float(startf)/SAMPLE_RATE, 60./140*8, True).purify(True)
 
     gi = Guitar2(lambda f: Digitar(f, buffersize=350))
     gi.tempo = 140
@@ -179,7 +179,7 @@ def main_tune():
     q3 = ((buf2&buf2) / 6 + (q1&q2) / 2)
     q4 = glitchmobile(q3, ('ok', 0.5), ('loop', 0.1, 3), ('ok', 0.5), ('loop', 0.1, 5), ('ok', 0.5), ('loop', 0.2, 4), ('ok', 0.3), ('pitch', 0.3, -0.5), ('pitch', 0.5, -0.2), ('ok', 0.5), ('gap', 0.1), ('ok', 0.1), ('gap', 0.1), ('pitchfrom', 3, 2, 0), ('ok', 1), ('loop', 0.1, 7), ('pitch', 0.5, -0.2), ('pitch', 0.5, -0.4), ('pitch', 0.25, -0.6), ('pitch', 0.25, -0.8), ('cut',))
     q4_5 = Purifier(Digitar(C4, buffersize=350), 6)
-    q5 = sound.filter.PitchShift(q4_5, -0.9) * sound.envelope.ADSR(0, 0, 4, 2, sustain_level=1)
+    q5 = sound.filter.PitchShift(q4_5, 0.1) * sound.envelope.ADSR(0, 0, 4, 2, sustain_level=1)
     q6 = q4 & q5
 
     e1 = pitch_right(Purifier(gi.note(C3, 5)), sound.sample.Noise()*1) >> 1
@@ -188,16 +188,16 @@ def main_tune():
     e4 = (e1 & e2) + (e3/2 >> 4)
     e5 = e4 >> 0.5
 
-    f1 = pitch_right(Purifier(Digitar(C3, None, 400), 1), sound.sample.Noise()*2)
-    f2 = pitch_right(Purifier(Digitar(C3, None, 600), 1), sound.sample.Noise()*1.2)
-    f3 = pitch_right(Purifier(Digitar(C3, None, 800), 0.8), sound.sample.Noise()*1)
-    f4 = pitch_right(Purifier(Digitar(C3, None, 1200), 0.5), sound.sample.Noise()*0.5)
-    f5 = pitch_right(Purifier(Digitar(C3, None, 1400), 0.5), sound.sample.Noise()*0.3)
-    f6 = pitch_right(Purifier(Digitar(C3, None, 1600), 0.5), sound.sample.Noise()*0.1)
-    f7 = Purifier(Digitar(C3, None, 2000), 2)
+    f1 = pitch_right(Purifier(Digitar(C3, buffersize=400), 1), sound.sample.Noise()*2)
+    f2 = pitch_right(Purifier(Digitar(C3, buffersize=600), 1), sound.sample.Noise()*1.2)
+    f3 = pitch_right(Purifier(Digitar(C3, buffersize=800), 0.8), sound.sample.Noise()*1)
+    f4 = pitch_right(Purifier(Digitar(C3, buffersize=1200), 0.5), sound.sample.Noise()*0.5)
+    f5 = pitch_right(Purifier(Digitar(C3, buffersize=1400), 0.5), sound.sample.Noise()*0.3)
+    f6 = pitch_right(Purifier(Digitar(C3, buffersize=1600), 0.5), sound.sample.Noise()*0.1)
+    f7 = Purifier(Digitar(C3, buffersize=2000), 2)
     f8 = f1 & f2 & f3 & f4 & f5 & f6 & f7
 
-    guitar = sound.sound.GuitarStrummer(lambda f: sound.sample.SawtoothWave(f) * sound.envelope.envelope(decay=0.01))
+    guitar = sound.async.GuitarStrummer(lambda f: sound.sample.SawtoothWave(f) * sound.envelope.envelope(decay=0.01))
     strum_stuff(guitar, 'C', 2, 160)
     strum_stuff(guitar, 'G', 2, 160, 2)
     strum_stuff(guitar, 'Am', 2, 160, 4)
@@ -242,5 +242,5 @@ def main_tune():
     return p8 & m4 & m6 & n3 & q6 & e5 & f8 & h8
 
 if __name__ == '__main__':
-    sound.play(main_tune())
+    main_tune().play(progress=True)
 

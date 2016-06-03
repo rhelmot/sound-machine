@@ -2,8 +2,9 @@
 # the provided format.json provides two sample melodies
 # the format can define its own instruments
 
+# pylint: disable=unnecessary-lambda,abstract-method
+
 import sound
-import time
 import sys
 import json
 import copy
@@ -167,7 +168,7 @@ class MusicData(object):
 def main(filename, melodyname):
     music = MusicData(filename)
     melody = music.melody(melodyname)
-    sound.play(melody)
+    melody.play()
     #with sound.play_async(melody):
     #    time.sleep(melody.duration / sound.SAMPLE_RATE)
 

@@ -1,8 +1,14 @@
-from . import SAMPLE_RATE, signal
-from .sound import Signal
-from .sample import SineWave as _SineWave
+from .signal import ConstantSignal, Signal
+from .sample import SineWave
+
+__all__ = ('LowPassFilter', 'BetterLowPassFilter', 'HighPassFilter', 'FakeFMFilter', 'FMFilter', 'ring_filter', 'bessel_wave', 'PitchShift')
 
 class LowPassFilter(Signal):
+    """
+    Filter the argument signal, cutting out higher-frequency components.
+
+    The beta parameter controls the strength of the filter.
+    """
     def __init__(self, src, beta=0.5, pure=False, iir=True):
         self.src = src
         self.beta = beta
@@ -31,6 +37,13 @@ class LowPassFilter(Signal):
         return out
 
 class BetterLowPassFilter(Signal):
+    """
+    This is a different implementation of the low pass filter.
+    Pass it a signal to filter, and then a number of numerical parameters.
+    Each frame of the output signal is the linear combination of the given
+    parameters and the last n frames from the input signal.
+    The last passes parameter corresponds with the most recent input frame.
+    """
     def __init__(self, src, *params):
         self.params = list(params)
         eq = float(sum(self.params))
@@ -48,6 +61,11 @@ class BetterLowPassFilter(Signal):
         return sum(x * y for x, y in zip(self.params, self.cache))
 
 class HighPassFilter(Signal):
+    """
+    Filter the input signal, cutting out low-frequency components.
+
+    The beta parameter controls the strength of the filter.
+    """
     def __init__(self, src, beta=0.5):
         self.src = src
         self.beta = beta
@@ -68,136 +86,10 @@ class HighPassFilter(Signal):
         self.last_out = out
         return out
 
-class SequencePure(Signal):
-    def __init__(self, srcs):
-        """
-        srcs is a sequence of tuples of (Sound, starttime)
-
-        starttime is in seconds
-        """
-        self.srcs = []
-        self.duration = 0
-        self.pure = True
-        for sound, time in srcs:
-            timef = int(time * SAMPLE_RATE)
-            self.srcs.append((sound, timef))
-            self.duration = max(self.duration, timef + sound.duration)
-            self.pure &= sound.pure
-
-    def amplitude(self, frame):
-        out = 0.
-        for src, start in self.srcs:
-            if frame < start or frame >= start + src.duration:
-                continue
-            out += src.amplitude(frame - start)
-        return out
-
-class Sequence(Signal):
-    def __init__(self, srcs):
-        """
-        srcs is a sequence of tuples of (Sound, starttime)
-
-        starttime is in seconds
-        """
-        srcs = list(srcs)
-        self.srcs = sorted(((sound, int(time * SAMPLE_RATE), int(time * SAMPLE_RATE + sound.duration)) for sound, time in srcs), key=lambda x: x[1], reverse=True)
-        self.duration = max(endf for _, _, endf in self.srcs)
-        self.lastframe = -1
-        self.active = []
-        self.pure = False
-
-    def amplitude(self, frame):
-        self.lastframe += 1
-        if self.lastframe != frame:
-            raise Exception("you're like. literally not allowed do that. use PureSequence if you want to access samples out of order.")
-
-        while len(self.srcs) != 0 and self.srcs[-1][1] == frame:
-            self.active.append(self.srcs.pop())
-
-        i = 0
-        out = 0.
-        while i < len(self.active):
-            if frame >= self.active[i][2]:
-                self.active.pop(i)
-            else:
-                out += self.active[i][0].amplitude(frame - self.active[i][1])
-                i += 1
-
-        return out
-
-class LoopImpure(Signal):
-    def __init__(self, soundfunc, length):
-        """
-        soundfunc is a function that when called with 0 args returns the sample we want to loop
-        """
-        self.duration = float('inf')
-        self.soundfunc = soundfunc
-        self.length = int(length * SAMPLE_RATE)
-        self.active = []
-        self.lastframe = -1
-        self.pure = False
-
-    def amplitude(self, frame):
-        if frame < 0: return 0
-
-        self.lastframe += 1
-        if self.lastframe != frame:
-            if frame < self.lastframe:
-                #print 'warning: rewinding LoopImpure'
-                self.lastframe = 0
-                self.active = []
-
-            if frame - self.lastframe > 50:
-                print 'warning: seeking LoopImpure %d frames' % (frame - self.lastframe)
-            self.lastframe -= 1
-            while self.lastframe + 1 < frame:
-                self.amplitude(self.lastframe + 1)
-            self.lastframe += 1
-
-        if frame % self.length == 0:
-            sound = self.soundfunc()
-            self.active.append((sound, frame, frame + sound.duration))
-
-        if len(self.active) > 0 and frame >= self.active[0][2]:
-            self.active.pop(0)
-
-        out = 0.
-        for sound, startf, _ in self.active:
-            out += sound.amplitude(frame - startf)
-
-        return out
-
-class Loop(Signal):
-    def __init__(self, sound, length):
-        if not sound.pure:
-            raise Exception("Use LoopImpure to loop an impure sound")
-        self.duration = float('inf')
-        self.sound = sound
-        self.length = int(length * SAMPLE_RATE)
-        self.overlap = sound.duration / self.length + 1
-        self.pure = True
-
-    def amplitude(self, frame):
-        out = 0.
-        dframe = frame % self.length
-        while dframe < self.sound.duration:
-            out += self.sound.amplitude(dframe)
-            dframe += self.length
-
-        return out
-
-class AMFilter(Signal):
-    def __init__(self, carrier, modulator, mod_quantity=0.2):
-        self.carrier = carrier
-        self.modulator = modulator
-        self.mod_quantity = mod_quantity
-        self.pure = carrier.pure and modulator.pure
-        self.duration = min(carrier.duration, modulator.duration)
-
-    def amplitude(self, frame):
-        return (1 + self.mod_quantity * self.modulator.amplitude(frame))*self.carrier.amplitude(frame)
-
 class FakeFMFilter(Signal):
+    """
+    Don't use this class please, I am so embarassed
+    """
     def __init__(self, carrier_class, modulator, carrier_freq=440, mod_quantity=300):
         self.carrier_class = carrier_class
         self.modulator = modulator
@@ -230,6 +122,10 @@ class FakeFMFilter(Signal):
         return out
 
 class FMFilter(Signal):
+    """
+    Modulate the frequency of the carrier signal with the modulator signal.
+    The strength of the modulator may be adjusted by the mod_quantity parameter.
+    """
     def __init__(self, carrier, modulator, mod_quantity=300):
         if not carrier.pure:
             raise Exception("Can't use an impure carrier for a FM filter")
@@ -242,24 +138,40 @@ class FMFilter(Signal):
     def amplitude(self, frame):
         return self.carrier.amplitude(frame + self.mod_quantity * self.modulator.amplitude(frame))
 
-def RingFilter(data):
+def ring_filter(data):
+    """
+    Perform ring modulation on a given number of signals.
+
+    :param data:    A list of signals to modulate together
+    """
     out = 1
     for src in data:
         out *= src
     return out
 
 def bessel_wave(freq, alpha, beta):
-    '''
+    """
     I literally don't care if this isn't technically a thing
-    '''
-    return FMFilter(_SineWave(freq), _SineWave(alpha), beta)
+
+    Outputs an FM-synthesized sample with carrier frequency freq, modulator frequency
+    freq * alpha, and modulator intensity beta
+    """
+    return FMFilter(SineWave(freq), SineWave(alpha), beta)
+
 
 class PitchShift(Signal):
+    """
+    Perform a pitch shift on the source signal by the shift signal.
+
+    The value of the shift signal serves as a multiplier for the frequency of the source.
+    Note that this works just by playing the source faster, so putting this on top of an
+    enveloped sound is a bad idea, you need to put this under the envelope.
+    """
     def __init__(self, src, shift):
         if isinstance(shift, (int, float, long)):
-            shift = signal.ConstantSignal(shift)
+            shift = ConstantSignal(shift)
         self.src = src
-        self.shift = shift
+        self.shift = shift - 1
         self.phase = 0
 
         self.pure = False

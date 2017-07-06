@@ -7,7 +7,7 @@ Good question!
 
    import sound
    from sound.notes import *
-   inst = sound.instruments.ElectricBass()
+   inst = sound.instrument.ElectricBass()
    inst.tempo = 120
    tune = inst.note(C3) & inst.note(D3) & inst.note(E3) & inst.note(F3) & inst.note(G3)
    tune.play()

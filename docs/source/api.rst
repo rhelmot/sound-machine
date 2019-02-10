@@ -30,4 +30,4 @@ Instruments and Notes
 Utilities for Asynchronous Play
 -------------------------------
 
-.. automodule:: sound.async
+.. automodule:: sound.asyncplayer

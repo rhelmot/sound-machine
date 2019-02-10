@@ -144,7 +144,7 @@ Abstract harder - Instruments and Notes
 ---------------------------------------
 
 So now that we can make interesting sounds, we want to assemble them into music - that's kind of hard right now, since it's super awkward to do these AST constructions by hand.
-This library comes with several predefined instruments in the ``sound.instruments`` module.
+This library comes with several predefined instruments in the ``sound.instrument`` module.
 Each instrument is a class whose instances may be used to produce notes.
 
 Let's use an electric bass as an example. ``bass = sound.instrument.ElectricBass()``.

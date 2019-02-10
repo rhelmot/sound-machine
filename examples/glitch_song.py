@@ -116,7 +116,7 @@ def make_digi(f, bufs, length):
     return Digitar(f, buffersize=bufs)[:length]
 
 def main_tune():
-    guitar = sound.async.GuitarStrummer(Digitar)
+    guitar = sound.asyncplayer.GuitarStrummer(Digitar)
     strum_stuff(guitar, 'C', 2, 140)
     strum_stuff(guitar, 'G', 2, 140, 2)
     strum_stuff(guitar, 'Am', 2, 140, 4)
@@ -157,7 +157,7 @@ def main_tune():
     for i in range(30):
         n1 &= md(C4 - 10 + i/2., 50 + i*19, (2**-(i/7.)))
 
-    guitar = sound.async.GuitarStrummer(lambda f: Digitar(f, buffersize=350))
+    guitar = sound.asyncplayer.GuitarStrummer(lambda f: Digitar(f, buffersize=350))
     guitar.strum_down('C', 23000)
     guitar.queue(23000*6.5, (guitar.strum_down, ('F',400)))
     buf = guitar[:float(n1.duration)/SAMPLE_RATE - 6].purify(True)
@@ -197,7 +197,7 @@ def main_tune():
     f7 = Purifier(Digitar(C3, buffersize=2000), 2)
     f8 = f1 & f2 & f3 & f4 & f5 & f6 & f7
 
-    guitar = sound.async.GuitarStrummer(lambda f: sound.sample.SawtoothWave(f) * sound.envelope.envelope(decay=0.01))
+    guitar = sound.asyncplayer.GuitarStrummer(lambda f: sound.sample.SawtoothWave(f) * sound.envelope.envelope(decay=0.01))
     strum_stuff(guitar, 'C', 2, 160)
     strum_stuff(guitar, 'G', 2, 160, 2)
     strum_stuff(guitar, 'Am', 2, 160, 4)
@@ -243,4 +243,3 @@ def main_tune():
 
 if __name__ == '__main__':
     main_tune().play(progress=True)
-

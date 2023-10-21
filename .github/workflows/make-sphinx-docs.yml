@@ -11,13 +11,6 @@ jobs:
     - uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "docs/"
-    # We need a .nojekyll file in the root of the gh-pages branch
-    # to prevent GitHub from ignoring files that begin with an underscore
-    # See: https://help.github.com/en/articles/files-that-start-with-an-underscore-are-missing
-    # Also: 
-    # - name: Add .nojekyll file
-    #   run: |
-    #     sudo touch docs/build/html/.nojekyll
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@v4
       with:

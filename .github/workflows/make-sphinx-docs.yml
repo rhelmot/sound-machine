@@ -27,7 +27,7 @@ jobs:
         uses: uibcdf/action-sphinx-docs-to-gh-pages@v1.1.0
         with:
           branch: master
-          dir_docs: docs
+          dir_docs: docs/source
           sphinxapiopts: '--separate -o . ../'
           sphinxapiexclude: '../*setup* ../*.ipynb'
           sphinxopts: ''

@@ -1,0 +1,27 @@
+name: "Make Sphinx Docs"
+on: 
+- workflow_dispatch
+- pull_request
+
+jobs:    
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: ammaraskar/sphinx-action@master
+      with:
+        docs-folder: "docs/"
+    # We need a .nojekyll file in the root of the gh-pages branch
+    # to prevent GitHub from ignoring files that begin with an underscore
+    # See: https://help.github.com/en/articles/files-that-start-with-an-underscore-are-missing
+    # Also: 
+    # - name: Add .nojekyll file
+    #   run: |
+    #     sudo touch docs/build/html/.nojekyll
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        branch: gh-pages # The branch the action should deploy to.
+        folder: docs/build/html
+        clean: true # Automatically remove deleted files from the deploy branch
+    

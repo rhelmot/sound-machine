@@ -2,8 +2,9 @@
 from .import SAMPLE_RATE
 from .filter import HighPassFilter, FakeFMFilter, LowPassFilter, FMFilter, ring_filter, PitchShift
 from .envelope import Decay, envelope, Envelope, ADSR
-from .sample import SineWave as Sine, harmonics, Noise, Digitar
+from .tone import SineWave as Sine, harmonics, Noise, Digitar
 from .note import Note
+from .sample import RawData
 
 __all__ = ('Instrument', 'SineSustain', 'SineHit', 'KickDrum', 'Shaker', 'BassDrum', 'SquareViolin', 'HardDisk', 'ElectricHorn', 'Bell', 'Bell2', 'ElectricBass', 'Guitar')
 
@@ -12,13 +13,13 @@ class Instrument(object):
     A base class for instruments.
     An instrument is an object that can produce notes to a certain specification.
     """
-    def __init__(self, tempo=120):
+    def __init__(self, tempo=120, volume=1):
         """
         :param tempo:   The tempo to produce notes at, in bpm. Optional, defaults to 120.
         """
         self.tempo = tempo
         self.articulation = 0.8
-        self.volume = 1
+        self.volume = volume
 
     @property
     def beat(self):
@@ -47,7 +48,7 @@ class Instrument(object):
         filling = min(1, articulation / 0.8)
         legato = max(0, (articulation - 0.8) / 0.2)
         n = Note(self._note(freq, beats, filling, legato), beats, self.beat * SAMPLE_RATE) * self.volume
-        n.author = self
+        #n.author = self
         return n
 
     def _note(self, freq, beats, filling, legato):
@@ -61,13 +62,22 @@ class Instrument(object):
         self.note(*args).play()
 
 
+class SampledDrum(Instrument):
+    def __init__(self, bpm, filenames):
+        super(SampledDrum, self).__init__(bpm)
+        self.samples = [RawData.from_file(fname) for fname in filenames]
+
+    def _note(self, freq, beats, filling, legato):
+        return self.samples[freq]
+
+
 class SineSustain(Instrument):
     """
     A sustained sine tone.
     """
     def _note(self, freq, beats, filling, legato):
         env = Envelope(beats * self.beat * filling)
-        avgenvelope = 0.5*legato*env + (1-legato)*env.adsr(0.01,0.05,0.1, sustain_level=0.5)
+        avgenvelope = 0.5*legato*env + (1-legato)*env.apply_adsr(0.01,0.05,0.1, sustain_level=0.5)
         return Sine(freq) * avgenvelope
 
 class SineHit(Instrument):
@@ -76,8 +86,10 @@ class SineHit(Instrument):
     """
     def _note(self, freq, beats, filling, legato):
         env = Envelope(beats * self.beat * filling)
-        env2 = env.decay(0.095*filling**4 + 0.005).adsr(0, 0, 0.1 - 0.1*legato, sustain_level=1)
-        return Sine(freq) * env2
+        env2 = env.apply_decay(0.095*filling**4 + 0.005)
+        assert isinstance(env2, Decay)
+        env3 = env2.apply_adsr(0.005, 0, 0.1 - 0.1*legato, sustain_level=1)
+        return Sine(freq) * env3
 
 #def xylophone(freq):
 #    return Sine(freq/4)    * Decay(0.1, 2, 0.01, 0.3)   * 0.5  + \
@@ -129,7 +141,7 @@ class SquareViolin(Instrument):
         #               sustain_level=1,
         #               decaying_sustain=False)
         env = Envelope(beats * self.beat * filling)
-        argenvelope = 0.5*legato*env + (1-legato)*env.adsr(0.01,0.05,0.1, sustain_level=0.5)
+        argenvelope = 0.5*legato*env + (1-legato)*env.apply_adsr(0.01,0.05,0.1, sustain_level=0.5)
         return sum(Sine(freq*i) * 0.5 * 1./i for i in range(1, 5)) * argenvelope
 
 class HardDisk(Instrument):
@@ -160,7 +172,7 @@ class Bell(Instrument):
 class Bell2(Instrument):
     """
     Another bell, sounding more metallic, made from my horrible failed first attempt at FM synthesis.
-    Doesn't sound good at all frequenies.
+    Doesn't sound good at all frequencies.
     """
     def _note(self, freq, *args):
         return LowPassFilter(

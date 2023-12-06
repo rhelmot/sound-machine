@@ -1,7 +1,8 @@
+from typing import Union
 import math
 
 from . import SAMPLE_RATE
-from .signal import Signal
+from .signal import ConstantSignal, Signal
 
 __all__ = ('Envelope', 'ADSR', 'Decay', 'Line', 'envelope')
 
@@ -22,7 +23,7 @@ class Envelope(Signal):
             return 1
         return 0
 
-    def adsr(self, attack, decay, release, attack_level=1, sustain_level=0.5):
+    def apply_adsr(self, attack, decay, release, attack_level=1, sustain_level=0.5):
         """
         Return the current envelope with an additional ADSR component.
         Parameters are the same as for the ADSR class initializer.
@@ -30,14 +31,19 @@ class Envelope(Signal):
         sub = 1 if type(self) is Envelope else self
         return sub * ADSR(attack, decay, self.duration / SAMPLE_RATE - attack - decay - release, release, attack_level, sustain_level)
 
-    def decay(self, decay_param):
+    def apply_decay(self, decay_param):
         """
         Add an exponential decay to the current envelope.
 
         :param decay_param:     The speed of the decay, between 0 and 1. Lower values decay faster.
         """
-        sub = 1 if type(self) is Envelope else self
-        return sub * Decay(0, self.duration / SAMPLE_RATE, 0, decay_param)
+        decay = Decay(0, self.duration / SAMPLE_RATE, 0, decay_param)
+        if type(self) is Envelope:
+            return decay
+        else:
+            result = self * decay
+            assert not isinstance(result, ConstantSignal)
+            return result
 
 
 class ADSR(Envelope):
@@ -54,7 +60,7 @@ class ADSR(Envelope):
          [1] [2]   [3]     [4]
 
     """
-    def __init__(self, attack, decay, sustain, release, attack_level=1, sustain_level=0.5):
+    def __init__(self, attack, decay, sustain, release, attack_level: Union[int, float]=1, sustain_level=0.5):
         super(ADSR, self).__init__(attack + decay + sustain + release)
         self.attack = attack * SAMPLE_RATE
         self.decay = decay * SAMPLE_RATE
@@ -119,7 +125,7 @@ def envelope(sustain=None,
              attack=0.01,
              decay=None,
              release=None,
-             attack_level=1,
+             attack_level: Union[int, float]=1,
              sustain_level=0.7,
              decaying_sustain=True):
     """
@@ -164,6 +170,11 @@ class Line(Envelope):
         self.end = end
 
     def amplitude(self, frame):
+        #if frame == 0:
+            #print 'line starting!', self.start, self.end, self.duration/SAMPLE_RATE
+        #if self.duration == 5 * SAMPLE_RATE:
+        #    print 'AAAA', frame
+        #    import ipdb; ipdb.set_trace()
         if frame < 0:
             return self.start
         if frame >= self.duration:

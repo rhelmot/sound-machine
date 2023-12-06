@@ -1,18 +1,13 @@
+# pylint: disable=superfluous-parens
 import numpy
 import struct
 import wave
 
-try:
-    import progressbar
-except ImportError:
-    progressbar = None
+import progressbar
 
 from . import SAMPLE_RATE, sd
 
-try:
-    numty = (int, float, long)
-except NameError:
-    numty = (int, float)
+numty = (int, float)
 
 __all__ = ('Signal', 'LoopSignal', 'DelaySignal', 'SequenceSignal', 'InvertSignal', 'ConstantSignal', 'MixSignal', 'EnvelopeSignal', 'Purifier', 'SliceSignal', 'ReverseSignal')
 
@@ -66,15 +61,16 @@ class Signal(object):
         :param thing:       The signal to play
         """
         def cb(outdata, frames, time, status):  # pylint: disable=unused-argument
-            startframe = stream.timer
+            nonlocal timer
+            startframe = timer
             for i in range(frames):
                 outdata[i] = self.amplitude(i+startframe)
-            stream.timer += frames
-            if stream.timer >= self.duration:
+            timer += frames
+            if timer >= self.duration:
                 raise sd.CallbackStop
 
         stream = sd.OutputStream(callback=cb)
-        stream.timer = 0
+        timer = 0
         stream.start()
         return stream
 
@@ -90,10 +86,10 @@ class Signal(object):
         mm = 2**15 - 1
         fp = wave.open(filename, 'w')
         fp.setparams((1, 2, 44100, 63822, 'NONE', 'not compressed'))
-        fp.writeframes(''.join(struct.pack('h', int(max(min(dat, 1), -1)*mm)) for dat in data))
+        fp.writeframes(b''.join(struct.pack('h', int(max(min(dat, 1), -1)*mm)) for dat in data))
         fp.close()
 
-    def render(self, length=None, progress=False):
+    def render(self, length=None, progress=False, clip_warn=True):
         """
         Render this signal into an numpy array of floats. Return the array.
 
@@ -109,14 +105,20 @@ class Signal(object):
             duration = 3*SAMPLE_RATE
         else:
             duration = int(duration)
-        out = numpy.empty((duration, 1))
+        out = numpy.empty((duration,))
 
         pbar = progressbar.ProgressBar(widgets=['Rendering: ', progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.ETA()], maxval=duration-1).start() if progress else None
 
+        clipped = 0
         for i in range(duration):
             out[i] = self.amplitude(i)
             if pbar: pbar.update(i)
+            if clip_warn and abs(out[i]) > 1:
+                clipped = max(abs(out[i]), clipped)
+                out[i] = 1 if out[i] > 0 else -1
         if pbar: pbar.finish()
+        if clip_warn and clipped != 0:
+            print('Warning: clipping! max val %s' % clipped)
         return out
 
     def amplitude(self, frame):
@@ -223,7 +225,7 @@ class LoopSignal(Signal):
     """
     def __init__(self, src, length):
         self.src = src.purify()     # lmao
-        self.length = int(length * SAMPLE_RATE)
+        self.length = int(length * SAMPLE_RATE) if length != 0 else src.duration
         self.duration = float('inf')
         self.pure = True
 
@@ -240,7 +242,7 @@ class LoopSignal(Signal):
 
 class DelaySignal(Signal):
     """
-    A signal that delays its child by n samples
+    A signal that delays its child by n seconds
     """
     def __init__(self, src, delay):
         """
@@ -437,4 +439,3 @@ class ReverseSignal(Signal):
 
     def reverse(self):
         return self.src
-

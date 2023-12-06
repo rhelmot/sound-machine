@@ -8,17 +8,23 @@ import sound
 import sys
 import json
 import copy
+from functools import reduce
 
 try:
     num = (int, long, float)
 except NameError:
     num = (int, float)
-Sig = sound.signal.Signal
+try:
+    anystr = (str, unicode)
+except NameError:
+    anystr = (str, bytes)
+
+Sig = sound.tone.Signal
 available_signals = [
-        (lambda sine: sound.sample.SineWave(sine), (num,)),
-        (lambda square: sound.sample.SquareWave(square), (num,)),
-        (lambda triangle: sound.sample.TriangleWave(triangle), (num,)),
-        (lambda sawtooth: sound.sample.SawtoothWave(sawtooth), (num,)),
+        (lambda sine: sound.tone.SineWave(sine), (num,)),
+        (lambda square: sound.tone.SquareWave(square), (num,)),
+        (lambda triangle: sound.tone.TriangleWave(triangle), (num,)),
+        (lambda sawtooth: sound.tone.SawtoothWave(sawtooth), (num,)),
         (lambda add_1, add_2: add_1 + add_2, (num, num)),
         (lambda sub_1, sub_2: sub_1 - sub_2, (num, num)),
         (lambda mul_1, mul_2: mul_1 * mul_2, (num, num)),
@@ -54,7 +60,7 @@ class UserInstrument(sound.instrument.Instrument):
 
     @staticmethod
     def parse_helper(name, func, types, item, env):
-        keys = func.func_code.co_varnames
+        keys = func.__code__.co_varnames
         assert len(keys) == len(types)
         for key in keys:
             if key not in item:
@@ -66,7 +72,7 @@ class UserInstrument(sound.instrument.Instrument):
     def parse_signal(name, signal, env):
         if type(signal) in num:
             return signal
-        elif type(signal) in (str, unicode):
+        elif type(signal) in anystr:
             if signal in env:
                 return env[signal]
             else:
@@ -93,7 +99,7 @@ class MusicData(object):
 
         self.default_instruments = self.json_info.get('default_instruments', {})
         self.default_instrument = 'sine'
-        self.instruments = {key: UserInstrument(key, val) for key, val in self.json_info.get('instruments', {}).iteritems()}
+        self.instruments = {key: UserInstrument(key, val) for key, val in self.json_info.get('instruments', {}).items()}
         self.instruments['sine'] = UserInstrument("sine", { "sine": "$FREQUENCY" })
 
         self.tempo = self.json_info.get('tempo', 120)
@@ -176,7 +182,7 @@ def main(filename, melodyname):
     #    time.sleep(melody.duration / sound.SAMPLE_RATE)
 
 def usage(argv0):
-    print 'Usage: %s filename melodyname' % argv0
+    print('Usage: %s filename melodyname' % argv0)
 
 if __name__ == '__main__':
     if len(sys.argv) > 2:

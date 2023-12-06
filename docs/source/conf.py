@@ -52,8 +52,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Sound Machine'
-copyright = u'2016, Andrew Dutcher'
-author = u'Andrew Dutcher'
+copyright = u'2023, Audrey Dutcher'
+author = u'Audrey Dutcher'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -116,7 +116,7 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-intersphinx_mapping = {'python': ('https://docs.python.org/2.7', None)}
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 autoclass_content = "both"
 autodoc_default_flags = ['members',
@@ -282,7 +282,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'SoundMachine.tex', u'Sound Machine Documentation',
-     u'Andrew Dutcher', 'manual'),
+     u'Audrey Dutcher', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

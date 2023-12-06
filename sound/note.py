@@ -3,10 +3,7 @@ from .signal import ConstantSignal, Signal
 
 __all__ = ('Note',)
 
-try:
-    numty = (int, float, long)
-except NameError:
-    numty = (int, float)
+numty = (int, float)
 
 class Note(Signal):
     """
@@ -38,6 +35,8 @@ class Note(Signal):
 
     def __mul__(self, other):
         if type(other) in numty:
+            return Note(self.src * other, self.value, self.beat)
+        if type(other) is not Note:
             return Note(self.src * other, self.value, self.beat)
         return Note(self.src * other.src, max(self.value, other.value), other.beat)
 

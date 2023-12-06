@@ -2,10 +2,11 @@
 # The song is produced by the function main_tune.
 
 # pylint: disable=undefined-variable,wildcard-import,unused-wildcard-import,invalid-slice-index
+import sys
 import sound
 from sound.notes import *
 from sound.instrument import Instrument, Guitar
-from sound.sample import Digitar, SquareWave, SAMPLE_RATE
+from sound.tone import Digitar, SquareWave, SAMPLE_RATE
 from sound.signal import SliceSignal, Purifier, ReverseSignal, ConstantSignal
 
 def strum_stuff(guitar, chord, length, bpm, basebeat=0):
@@ -116,7 +117,7 @@ def make_digi(f, bufs, length):
     return Digitar(f, buffersize=bufs)[:length]
 
 def main_tune():
-    guitar = sound.async.GuitarStrummer(Digitar)
+    guitar = sound.asyncplayer.GuitarStrummer(Digitar)
     strum_stuff(guitar, 'C', 2, 140)
     strum_stuff(guitar, 'G', 2, 140, 2)
     strum_stuff(guitar, 'Am', 2, 140, 4)
@@ -133,7 +134,7 @@ def main_tune():
     p3 = p2[:0.2]
     p4 = p1 + (p3 >> 60./140*4.4)*2
     p5 = n_of_them(p3, 21)
-    p6 = sound.sample.BrownNoise() * sound.envelope.Line(0, 3, 3)
+    p6 = sound.tone.BrownNoise() * sound.envelope.Line(0, 3, 3)
     p7 = p5 + (p6 >> 1.2)
     p8 = (p4 & p7) / 8
 
@@ -150,14 +151,14 @@ def main_tune():
     bm5 = Purifier(buf2/8 + m5 / 2)
     line = sound.envelope.Line(0, 5, 60./140*8)
     square = SquareWave(50)*sound.envelope.Envelope(0.5)
-    m6 = pitch_right(bm5, sound.sample.Noise() * line * line * line) & square
+    m6 = pitch_right(bm5, sound.tone.Noise() * line * line * line) & square
 
     md = make_digi
     n1 = md(C4 - 10, 50, 1)
     for i in range(30):
         n1 &= md(C4 - 10 + i/2., 50 + i*19, (2**-(i/7.)))
 
-    guitar = sound.async.GuitarStrummer(lambda f: Digitar(f, buffersize=350))
+    guitar = sound.asyncplayer.GuitarStrummer(lambda f: Digitar(f, buffersize=350))
     guitar.strum_down('C', 23000)
     guitar.queue(23000*6.5, (guitar.strum_down, ('F',400)))
     buf = guitar[:float(n1.duration)/SAMPLE_RATE - 6].purify(True)
@@ -182,22 +183,22 @@ def main_tune():
     q5 = sound.filter.PitchShift(q4_5, 0.1) * sound.envelope.ADSR(0, 0, 4, 2, sustain_level=1)
     q6 = q4 & q5
 
-    e1 = pitch_right(Purifier(gi.note(C3, 5)), sound.sample.Noise()*1) >> 1
-    e2 = pitch_right(Purifier(gi.note(D3, 10)), sound.sample.Noise()*2)
+    e1 = pitch_right(Purifier(gi.note(C3, 5)), sound.tone.Noise()*1) >> 1
+    e2 = pitch_right(Purifier(gi.note(D3, 10)), sound.tone.Noise()*2)
     e3 = q5[:3.5]
     e4 = (e1 & e2) + (e3/2 >> 4)
     e5 = e4 >> 0.5
 
-    f1 = pitch_right(Purifier(Digitar(C3, buffersize=400), 1), sound.sample.Noise()*2)
-    f2 = pitch_right(Purifier(Digitar(C3, buffersize=600), 1), sound.sample.Noise()*1.2)
-    f3 = pitch_right(Purifier(Digitar(C3, buffersize=800), 0.8), sound.sample.Noise()*1)
-    f4 = pitch_right(Purifier(Digitar(C3, buffersize=1200), 0.5), sound.sample.Noise()*0.5)
-    f5 = pitch_right(Purifier(Digitar(C3, buffersize=1400), 0.5), sound.sample.Noise()*0.3)
-    f6 = pitch_right(Purifier(Digitar(C3, buffersize=1600), 0.5), sound.sample.Noise()*0.1)
+    f1 = pitch_right(Purifier(Digitar(C3, buffersize=400), 1), sound.tone.Noise()*2)
+    f2 = pitch_right(Purifier(Digitar(C3, buffersize=600), 1), sound.tone.Noise()*1.2)
+    f3 = pitch_right(Purifier(Digitar(C3, buffersize=800), 0.8), sound.tone.Noise()*1)
+    f4 = pitch_right(Purifier(Digitar(C3, buffersize=1200), 0.5), sound.tone.Noise()*0.5)
+    f5 = pitch_right(Purifier(Digitar(C3, buffersize=1400), 0.5), sound.tone.Noise()*0.3)
+    f6 = pitch_right(Purifier(Digitar(C3, buffersize=1600), 0.5), sound.tone.Noise()*0.1)
     f7 = Purifier(Digitar(C3, buffersize=2000), 2)
     f8 = f1 & f2 & f3 & f4 & f5 & f6 & f7
 
-    guitar = sound.async.GuitarStrummer(lambda f: sound.sample.SawtoothWave(f) * sound.envelope.envelope(decay=0.01))
+    guitar = sound.asyncplayer.GuitarStrummer(lambda f: sound.tone.SawtoothWave(f) * sound.envelope.envelope(decay=0.01))
     strum_stuff(guitar, 'C', 2, 160)
     strum_stuff(guitar, 'G', 2, 160, 2)
     strum_stuff(guitar, 'Am', 2, 160, 4)
@@ -242,5 +243,9 @@ def main_tune():
     return p8 & m4 & m6 & n3 & q6 & e5 & f8 & h8
 
 if __name__ == '__main__':
-    main_tune().play(progress=True)
+    tune = main_tune()
+    if len(sys.argv) > 1:
+        tune.write(sys.argv[1])
+    else:
+        tune.play(progress=True)
 

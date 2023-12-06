@@ -1,12 +1,9 @@
 from .signal import ConstantSignal, Signal
-from .sample import SineWave
+from .tone import SineWave
 
 __all__ = ('LowPassFilter', 'BetterLowPassFilter', 'HighPassFilter', 'FakeFMFilter', 'FMFilter', 'ring_filter', 'bessel_wave', 'PitchShift')
 
-try:
-    numty = (int, float, long)
-except NameError:
-    numty = (int, float)
+numty = (int, float)
 
 class LowPassFilter(Signal):
     """
@@ -133,7 +130,7 @@ class FMFilter(Signal):
     """
     def __init__(self, carrier, modulator, mod_quantity=300):
         if not carrier.pure:
-            raise Exception("Can't use an impure carrier for a FM filter")
+            raise Exception("Can't use an impure carrier for an FM filter")
         self.carrier = carrier
         self.modulator = modulator
         self.mod_quantity = mod_quantity
@@ -196,3 +193,21 @@ class PitchShift(Signal):
         s1 = self.src.amplitude(f1)
         s2 = self.src.amplitude(f2)
         return s1 * (1-fracpart) + s2 * fracpart
+
+
+class Convolution(Signal):
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+        self.duration = a.duration + b.duration
+
+    def amplitude(self, frame):
+        out = 0.
+        f = frame
+        g = 0
+        while f > 0 and g < self.b.duration:
+            out += self.a.amplitude(f) * self.b.amplitude(g)
+            f -= 1
+            g += 1
+
+        return g

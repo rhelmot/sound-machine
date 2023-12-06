@@ -3,7 +3,7 @@
 This is a library to do audio synthesis and music composition.
 Its goal is to make the interface as simple as possible to use with as short a learning curve as possible.
 
-It is written in pure python, and supports both python 2 and 3.
+It is written in pure python, and supports python >=3.6.
 
 ## Installation
 
@@ -23,8 +23,6 @@ mkvirtualenv --python=`which pypy` sound
 pip install sound-machine
 ```
 
-At time of writing, the python package index is suffering some pretty nasty technical difficulties, so if the above install commands don't work for you, the `pip install sound-machine` line can be replaced with `pip install git+https://github.com/rhelmot/sound-machine.git`.
-
 ## Usage
 
 This is a python module.
@@ -33,4 +31,4 @@ It would be a good idea to do this in the IPython shell so you can use tab-autoc
 
 ## Documentation
 
-Read it [here](https://cs.ucsb.edu/~dutcher/sound-machine/)!
+Read it [here](https://sound-machine.readthedocs.io/)!

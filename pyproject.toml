@@ -39,3 +39,5 @@ find = {}
 [tool.setuptools.dynamic]
 version = {attr = "sound.__version__"}
 
+[tool.pyright]
+pythonVersion = "3.6"

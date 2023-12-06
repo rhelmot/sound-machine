@@ -1,0 +1,72 @@
+name: CI
+on:
+  - push
+  - pull_request
+jobs:
+  test:
+    name: Tests
+    if: always()
+    runs-on: ubuntu-latest
+    env:
+      PYTHON: 3.12
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup python
+      uses: actions/setup-python@main
+      with:
+        python-version: 3.12
+    - name: Deps
+      run: 'pip install pyright'
+    - name: Analyze
+      run: 'pyright sound'
+  audit:
+    name: Pip Audit
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup python
+      uses: actions/setup-python@main
+      with:
+        python-version: '3.11'
+    - name: Update Build Deps
+      run: pip install -U setuptools pip wheel
+    - name: install
+      run: pip install .
+    - uses: pypa/gh-action-pip-audit@v1.0.6
+  docs:
+    name: Build Documentation
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup python
+      uses: actions/setup-python@main
+      with:
+        python-version: '3.12'
+    - name: Deps
+      run: 'pip install -e . -r ./docs/requirements.txt'
+    - name: Build Docs
+      run: 'make -C docs html'
+  release:
+    name: Release to PyPI
+    needs: ["test", "audit", "docs"]
+    if: "github.event_name == 'push' && github.repository == 'rhelmot/sound-machine' && startsWith(github.ref, 'refs/tags/v') && success()"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup python
+      uses: actions/setup-python@main
+      with:
+        python-version: '3.12'
+    - name: Deps
+      run: 'pip install -U build wheel semver'
+    - name: Fix Version
+      run: './release.py finalize'
+    - name: Build
+      run: 'python -m build'
+    - name: Publish
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}

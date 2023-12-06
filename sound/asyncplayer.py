@@ -34,7 +34,7 @@ class AsyncPlayer(Signal):
                 if len(callback) == 2 and callable(callback[0]):
                     callback[0](*callback[1])
                 else:
-                    self.play(*callback)
+                    self.play(*callback)  # type: ignore
             else:
                 self.play(callback)
 

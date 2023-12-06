@@ -1,4 +1,5 @@
 # pylint: disable=superfluous-parens
+from typing import Optional
 import numpy
 import struct
 import wave
@@ -41,7 +42,7 @@ class Signal(object):
     """
     # pylint: disable=unused-argument,no-self-use
 
-    def play(self, length=None, progress=False):
+    def play(self, length: Optional[float]=None, progress=False):
         """
         Play this signal. Block until playback is complete.
         If the given signal is infinitely long, default to three seconds of playback.
@@ -121,47 +122,47 @@ class Signal(object):
             print('Warning: clipping! max val %s' % clipped)
         return out
 
-    def amplitude(self, frame):
+    def amplitude(self, frame: int) -> float:
         """
         The main interface for accessing sample data. This is the primary method that should
         be overridden by subclasses.
 
         :param frame:       The frame whose amplitude should be returned.
         """
-        return 0
+        return 0.
 
     duration = 0
     pure = True
 
-    def __add__(self, other):
+    def __add__(self, other) -> "Signal":
         if other == 0:
             return self
         if type(other) is DelaySignal:
             return SequenceSignal((self, 0), (other.src, other.delay))
         return MixSignal(self, ConstantSignal.wrap(other))
 
-    def __radd__(self, other):
+    def __radd__(self, other) -> "Signal":
         return self + other
 
-    def __sub__(self, other):
+    def __sub__(self, other) -> "Signal":
         if other == 0:
             return self
         return self + -ConstantSignal.wrap(other)
 
-    def __rsub__(self, other):
+    def __rsub__(self, other) -> "Signal":
         return -self + ConstantSignal.wrap(other)
 
-    def __mul__(self, other):
+    def __mul__(self, other) -> "Signal":
         if other == 1:
             return self
         if other == 0 or (type(other) == ConstantSignal and other._amplitude == 0):
             return ConstantSignal(0)
         return EnvelopeSignal(self, ConstantSignal.wrap(other))
 
-    def __rmul__(self, other):
+    def __rmul__(self, other) -> "Signal":
         return self * other
 
-    def __div__(self, other):
+    def __div__(self, other) -> "Signal":
         if type(other) not in numty:
             raise TypeError("Can't divide by %s" % repr(other))
         return self * (1./other)
@@ -172,21 +173,21 @@ class Signal(object):
     def __rdiv__(self, other):
         raise TypeError("Can't divide by %s" % repr(self))
 
-    def __neg__(self):
+    def __neg__(self) -> "Signal":
         return InvertSignal(self)
 
-    def __rshift__(self, other):
+    def __rshift__(self, other) -> "Signal":
         if type(other) not in numty:
             raise TypeError("Can't shift by %s" % repr(other))
         return DelaySignal(self, int(other*SAMPLE_RATE))
 
-    def __lshift__(self, other):
+    def __lshift__(self, other) -> "Signal":
         return self >> -other
 
-    def __and__(self, other):
+    def __and__(self, other) -> "Signal":
         return self + (other >> (float(self.duration) / SAMPLE_RATE))
 
-    def __mod__(self, other):
+    def __mod__(self, other) -> "Signal":
         if type(other) not in numty:
             raise TypeError("Can't loop by %s" % repr(other))
         return LoopSignal(self, other)
@@ -201,7 +202,7 @@ class Signal(object):
         else:
             raise KeyError(key)
 
-    def purify(self, preprocess=False):
+    def purify(self, preprocess=False) -> "Signal":
         """
         Return a pure version of this signal. This is a no-op for pure signals, but for
         impure signals it installs a caching layer on top of the signal.
@@ -213,7 +214,7 @@ class Signal(object):
             return self
         return Purifier(self, preprocess=preprocess)
 
-    def reverse(self):
+    def reverse(self) -> "Signal":
         """
         Return a reversed version of this signal.
         """
@@ -387,7 +388,7 @@ class Purifier(Signal):
             length = int(length * SAMPLE_RATE)
         self.nextf = 0
         self.duration = length
-        self.storage = [None]*(100000 if self.duration == float('inf') else int(self.duration))
+        self.storage = [0.]*(100000 if self.duration == float('inf') else int(self.duration))
         self.pure = True
         self.src = src
 
@@ -395,11 +396,11 @@ class Purifier(Signal):
             self.amplitude(self.duration - 1)
 
     def amplitude(self, frame):
-        if frame < 0: return 0
-        if frame >= self.duration: return 0
+        if frame < 0: return 0.
+        if frame >= self.duration: return 0.
         while frame >= self.nextf:
             if self.nextf >= len(self.storage):
-                self.storage += [None]*100000
+                self.storage += [0.]*100000
             self.storage[self.nextf] = self.src.amplitude(self.nextf)
             self.nextf += 1
         return self.storage[frame]

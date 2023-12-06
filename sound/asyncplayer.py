@@ -55,7 +55,7 @@ class AsyncPlayer(Signal):
             end = self.frame + int(note.duration)
             bisect.insort(self.playing, (-end, self.frame, note))
 
-    def play(self, note):
+    def play(self, note):  # type: ignore[reportIncompatibleMethodOverride]
         """
         :param note:    A Signal object to play, starting now.
         """

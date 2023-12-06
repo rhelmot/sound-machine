@@ -16,12 +16,12 @@ class Envelope(Signal):
         self.duration = duration * SAMPLE_RATE
         self.pure = True
 
-    def amplitude(self, frame):
+    def amplitude(self, frame: int) -> float:
         if frame < 0:
-            return 0
+            return 0.
         if frame < self.duration:
-            return 1
-        return 0
+            return 1.
+        return 0.
 
     def apply_adsr(self, attack, decay, release, attack_level=1, sustain_level=0.5):
         """
@@ -71,7 +71,7 @@ class ADSR(Envelope):
 
     def amplitude(self, frame):
         if frame < 0:
-            return 0
+            return 0.
         if frame < self.attack:
             return float(frame) / self.attack * self.attack_level
         frame -= self.attack
@@ -83,7 +83,7 @@ class ADSR(Envelope):
         frame -= self.sustain
         if frame < self.release:
             return float(frame) / self.release * -self.sustain_level + self.sustain_level
-        return 0
+        return 0.
 
 class Decay(Envelope):
     """

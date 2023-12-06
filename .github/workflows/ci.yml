@@ -16,7 +16,7 @@ jobs:
       with:
         python-version: 3.12
     - name: Deps
-      run: 'pip install pyright'
+      run: 'pip install pyright -e .'
     - name: Analyze
       run: 'pyright sound'
   audit:
@@ -44,6 +44,8 @@ jobs:
       uses: actions/setup-python@main
       with:
         python-version: '3.12'
+    - name: OS Deps
+      run: 'apt-get install -y libportaudio2'
     - name: Deps
       run: 'pip install -e . -r ./docs/requirements.txt'
     - name: Build Docs

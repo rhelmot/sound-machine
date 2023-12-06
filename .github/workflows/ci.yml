@@ -45,7 +45,7 @@ jobs:
       with:
         python-version: '3.12'
     - name: OS Deps
-      run: 'apt-get install -y libportaudio2'
+      run: 'sudo apt-get install -y libportaudio2'
     - name: Deps
       run: 'pip install -e . -r ./docs/requirements.txt'
     - name: Build Docs

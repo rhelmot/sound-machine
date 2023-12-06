@@ -25,16 +25,16 @@ class Signal(object):
     where a signal is expected and it will be converted automatically to an infinitely long
     constant signal of that value.
 
-    * ``+``: You may add signals together to mix them together. Constants ok.
-    * ``-``: You may subtract signals and it's like adding one to the inverse of the other.
-             You may also negate a signal. Constants ok.
-    * ``*``: You may multiply two signals together to perform enveloping or amplitude modulation.
-             Constants ok.
-    * ``/``: You may divide a signal by a number to reduce its amplitude by that factor.
-    * ``>>``: You may right-shift a signal by a number to delay it by that number of seconds.
-    * ``<<``: You may left-shift a signal by a number to move it back in time by that number of seconds.
-    * ``&``: You may and two signals together to concatenate them.
-    * ``%``: You may modulate a signal by a number to loop the first n seconds of it.
+    - ``+``: You may add signals together to mix them together. Constants ok.
+    - ``-``: You may subtract signals and it's like adding one to the inverse of the other.
+      You may also negate a signal. Constants ok.
+    - ``*``: You may multiply two signals together to perform enveloping or amplitude modulation.
+      Constants ok.
+    - ``/``: You may divide a signal by a number to reduce its amplitude by that factor.
+    - ``>>``: You may right-shift a signal by a number to delay it by that number of seconds.
+    - ``<<``: You may left-shift a signal by a number to move it back in time by that number of seconds.
+    - ``&``: You may and two signals together to concatenate them.
+    - ``%``: You may modulate a signal by a number to loop the first n seconds of it.
 
     Additionally, you may use array slice notation to extract slices of sample data.
     The slice bounds are in seconds. Normal array indexing does not do anything.

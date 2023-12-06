@@ -5,6 +5,9 @@ from . import SAMPLE_RATE, sd
 from .signal import Signal
 
 class RawData(Signal):
+    """
+    A signal which is specified by an array of sample values.
+    """
     def __init__(self, data):
         self.data = data
         self.duration = len(data)
@@ -18,6 +21,9 @@ class RawData(Signal):
 
     @staticmethod
     def from_file(filename):
+        """
+        Make a new RawData by loading from a .wav file.
+        """
         fp = wave.open(filename)
         n = fp.getnframes()
         bdata = fp.readframes(n)
@@ -27,5 +33,8 @@ class RawData(Signal):
 
     @staticmethod
     def record(seconds):
+        """
+        Make a new RawData by recording from the microphone.
+        """
         data = sd.rec(seconds * SAMPLE_RATE, blocking=True)
         return RawData(data)

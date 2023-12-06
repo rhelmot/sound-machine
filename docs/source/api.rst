@@ -13,6 +13,7 @@ Basics - Samples and Envelopes
 ------------------------------
 
 .. automodule:: sound.sample
+.. automodule:: sound.tone
 .. automodule:: sound.envelope
 
 Filters

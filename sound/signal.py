@@ -3,6 +3,8 @@ from typing import Optional
 import numpy
 import struct
 import wave
+import time
+import threading
 
 import progressbar
 
@@ -11,6 +13,34 @@ from . import SAMPLE_RATE, sd
 numty = (int, float)
 
 __all__ = ('Signal', 'LoopSignal', 'DelaySignal', 'SequenceSignal', 'InvertSignal', 'ConstantSignal', 'MixSignal', 'EnvelopeSignal', 'Purifier', 'SliceSignal', 'ReverseSignal')
+
+class AsyncControl:
+    def __init__(self, device, signal, length=None):
+        self.device = device
+        self.signal = signal
+        self.stopped = False
+        self.duration_samples = signal.duration if length is None else length * SAMPLE_RATE
+
+    def start(self):
+        threading.Thread(target=self.generate).start()
+
+    def generate(self):
+        buffer = []
+        for i in range(int(self.duration_samples)):
+            if len(buffer) == 2048:
+                self.device.queue_audio(buffer)
+                buffer = []
+            if self.stopped:
+                buffer = []
+                break
+            buffer.append(self.signal.amplitude(i))
+        self.device.queue_audio(buffer)
+        while self.device.queued_samples:
+            time.sleep(0.001)
+        self.device.close()
+
+    def stop(self):
+        self.stopped = True
 
 class Signal(object):
     """
@@ -51,29 +81,28 @@ class Signal(object):
         :param progress:    Whether to show a progress bar for rendering
         """
         data = self.render(length, progress)
-        sd.play(data, blocking=True)
+        device = sd.open()
+        device.queue_audio(data)
+        while device.queued_samples:
+            time.sleep(0.001)
+        device.close()
 
-    def play_async(self):
+    def play_async(self, length: Optional[float] = None):
         """
         Play this signal asynchronously. Return the `sounddevice` stream object for this playback.
         The only way you should ever really have to interact with the return value of this function is
-        to call `.stop()` on it.
+        to call `.close()` on it.
 
         :param thing:       The signal to play
         """
-        def cb(outdata, frames, time, status):  # pylint: disable=unused-argument
-            nonlocal timer
-            startframe = timer
-            for i in range(frames):
-                outdata[i] = self.amplitude(i+startframe)
-            timer += frames
-            if timer >= self.duration:
-                raise sd.CallbackStop
-
-        stream = sd.OutputStream(callback=cb)
-        timer = 0
-        stream.start()
-        return stream
+        device = sd.open()
+        control = AsyncControl(device, self, length)
+        control.start()
+        return control
+        # data = self.render(length)
+        # device = sd.open()
+        # device.queue_audio(data)
+        # return device
 
     def write(self, filename, length=None, progress=True):
         """
@@ -106,7 +135,7 @@ class Signal(object):
             duration = 3*SAMPLE_RATE
         else:
             duration = int(duration)
-        out = numpy.empty((duration,))
+        out = numpy.empty((duration,), dtype='float32')
 
         pbar = progressbar.ProgressBar(widgets=['Rendering: ', progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.ETA()], maxval=duration-1).start() if progress else None
 

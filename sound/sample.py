@@ -1,7 +1,7 @@
 import wave
 import struct
 
-from . import SAMPLE_RATE, sd
+from . import SAMPLE_RATE#, sd
 from .signal import Signal
 
 class RawData(Signal):
@@ -31,10 +31,10 @@ class RawData(Signal):
         fdata = [float(x)/(2**15 - 1) for x in idata]
         return RawData(fdata)
 
-    @staticmethod
-    def record(seconds):
-        """
-        Make a new RawData by recording from the microphone.
-        """
-        data = sd.rec(seconds * SAMPLE_RATE, blocking=True)
-        return RawData(data)
+    # @staticmethod
+    # def record(seconds):
+    #     """
+    #     Make a new RawData by recording from the microphone.
+    #     """
+    #     #data = sd.rec(seconds * SAMPLE_RATE, blocking=True)
+    #     return RawData(data)

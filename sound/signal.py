@@ -3,6 +3,7 @@ from typing import Optional
 import numpy
 import struct
 import wave
+import asyncio
 
 import progressbar
 
@@ -52,6 +53,16 @@ class Signal(object):
         """
         data = self.render(length, progress)
         sd.play(data, blocking=True)
+
+    async def aplay(self, length: Optional[float]=None):
+        """
+        Play this signal. Block (but asyncio yield) until playback is complete.
+        If the given signal is infinitely long, default to three seconds of playback.
+
+        :param length:      The length to play, in seconds. Optional.
+        """
+        data = await asyncio.get_event_loop().run_in_executor(None, self.render, length, False)
+        sd
 
     def play_async(self):
         """
